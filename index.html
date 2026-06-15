@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1D9E75">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FlorescerIA">
+<meta name="description" content="Autoestima e autoconhecimento — Método CIS">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;700;800&family=Nunito+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<title>FlorescerIA</title>
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp, limit }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCEelyfihFeT6xXVYJNoY62sEhLkzvBiA8",
+  authDomain: "floresceria-a1631.firebaseapp.com",
+  projectId: "floresceria-a1631",
+  storageBucket: "floresceria-a1631.firebasestorage.app",
+  messagingSenderId: "572333214071",
+  appId: "1:572333214071:web:749c83bc2bc6883fb63972"
+};
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
+const provider = new GoogleAuthProvider();
+
+let currentUser = null;
+
+// Expor funções globalmente para o código inline
+window.fbLogin = async () => {
+  try {
+    const result = await signInWithPopup(auth, provider);
+    return result.user;
+  } catch(e) { console.error(e); return null; }
+};
+window.fbLogout = () => signOut(auth);
+window.fbSaveSession = async (tipo, dados) => {
+  if(!currentUser) return;
+  try {
+    await addDoc(collection(db, 'sessoes'), {
+      uid: currentUser.uid, tipo, dados, criadoEm: serverTimestamp()
+    });
+  } catch(e) { console.error('saveSession:', e); }
+};
+window.fbSaveProfile = async (dados) => {
+  if(!currentUser) return;
+  try {
+    await setDoc(doc(db, 'usuarios', currentUser.uid), {
+      ...dados, uid: currentUser.uid, nome: currentUser.displayName,
+      email: currentUser.email, foto: currentUser.photoURL, atualizadoEm: serverTimestamp()
+    }, {merge:true});
+  } catch(e) { console.error('saveProfile:', e); }
+};
+window.fbGetSessions = async (tipo, max) => {
+  if(!currentUser) return [];
+  try {
+    const q = query(collection(db,'sessoes'),
+      where('uid','==',currentUser.uid), where('tipo','==',tipo),
+      orderBy('criadoEm','desc'), limit(max||10));
+    const snap = await getDocs(q);
+    return snap.docs.map(d=>({id:d.id,...d.data()}));
+  } catch(e) { return []; }
+};
+window.fbGerarLinkVinculo = async () => {
+  if(!currentUser) return null;
+  const codigo = currentUser.uid.slice(0,8).toUpperCase();
+  try {
+    await setDoc(doc(db,'usuarios',currentUser.uid), {
+      codigoVinculo: codigo, nome: currentUser.displayName,
+      foto: currentUser.photoURL
+    }, {merge:true});
+  } catch(e) {}
+  return 'https://venerable-cuchufli-a75e0d.netlify.app/painel.html?vincular=' + codigo + '&nome=' + encodeURIComponent(currentUser.displayName||'');
+};
+
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+  if(user) {
+    // Usuário logado — mostrar app
+    document.getElementById('s-login') && showAppAfterLogin(user);
+  } else {
+    // Não logado — mostrar tela de login
+    document.getElementById('s-login') && showLoginScreen();
+  }
+});
+
+window.showAppAfterLogin = (user) => {
+  document.getElementById('s-login').classList.remove('active');
+  document.getElementById('s-login').style.display = 'none';
+  document.getElementById('s-home').classList.add('active');
+  document.getElementById('s-home').style.display = 'flex';
+  // Atualizar avatar e nome
+  const avatarEl = document.getElementById('user-avatar');
+  const nomeEl = document.getElementById('user-nome');
+  if(avatarEl && user.photoURL) avatarEl.src = user.photoURL;
+  if(nomeEl) nomeEl.textContent = user.displayName?.split(' ')[0] || 'Olá';
+  // Salvar/atualizar perfil
+  window.fbSaveProfile({ultimoAcesso: serverTimestamp()});
+};
+
+window.showLoginScreen = () => {
+  document.querySelectorAll('.screen').forEach(s=>{s.style.display='none';s.classList.remove('active')});
+  const ls = document.getElementById('s-login');
+  if(ls){ls.style.display='flex';ls.classList.add('active');}
+};
+</script>
+
+<style>
+:root{
+  --green:#1D9E75;--gl:#E1F5EE;--gd:#0F6E56;--gdp:#085041;
+  --purple:#534AB7;--pl:#EEEDFE;--pd:#3C3489;
+  --coral:#D85A30;--cl:#FAECE7;--cd:#993C1D;
+  --amber:#BA7517;--al:#FAEEDA;
+  --red:#E24B4A;--rl:#FCEBEB;--rd:#A32D2D;
+  --pink:#D4537E;--pkl:#FBEAF0;
+  --bg:#F7FAF9;--card:#FFFFFF;
+  --text:#1a2e25;--t2:#4a6358;--t3:#8aab9e;
+  --border:rgba(29,158,117,0.15);
+  --r:16px;--rs:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:'Nunito Sans',sans-serif;color:var(--text)}
+#app{max-width:430px;margin:0 auto;height:100vh;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.screen{display:none;flex-direction:column;height:100%;animation:sIn .25s ease}
+.screen.active{display:flex}
+@keyframes sIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
+.scroll{flex:1;overflow-y:auto;padding:14px 18px 28px;-webkit-overflow-scrolling:touch}
+.scroll::-webkit-scrollbar{display:none}
+.topbar{display:flex;align-items:center;gap:10px;padding:48px 18px 12px;background:var(--bg);flex-shrink:0;border-bottom:1px solid var(--border)}
+.topbar-logo{width:34px;height:34px;border-radius:11px;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:17px}
+.topbar-title{font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;color:var(--text)}
+.topbar-badge{margin-left:auto;font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;background:var(--gl);color:var(--gdp)}
+.btn-back{background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:5px;font-size:13px;color:var(--t2);font-family:'Nunito Sans',sans-serif;padding:0}
+.card{background:var(--card);border-radius:var(--r);border:1px solid var(--border);padding:16px;margin-bottom:12px}
+.hero{border-radius:var(--r);padding:20px 18px;margin-bottom:14px;color:#fff}
+.hero .gr{font-size:12px;opacity:.85;margin-bottom:3px}
+.hero .ti{font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;line-height:1.3;margin-bottom:5px}
+.hero .su{font-size:13px;opacity:.85;line-height:1.6}
+.og{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.oc{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);padding:14px 10px;cursor:pointer;text-align:center;transition:all .15s}
+.oc:active{transform:scale(.97)}
+.oc .oi{font-size:21px;margin-bottom:6px}
+.oc .ol{font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:var(--text)}
+.oc .od{font-size:11px;color:var(--t3);margin-top:2px}
+.sl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);margin-bottom:9px;display:flex;align-items:center;gap:5px}
+.pt{height:5px;background:var(--gl);border-radius:99px;overflow:hidden;margin-bottom:14px}
+.pf{height:5px;border-radius:99px;background:var(--green);transition:width .4s ease}
+.qcard{background:var(--card);border-radius:var(--r);border:1px solid var(--border);padding:16px;margin-bottom:11px}
+.qt{font-size:15px;line-height:1.6;color:var(--text);margin-bottom:15px;font-weight:500}
+.lk{display:flex;gap:5px}
+.lb{flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--rs);padding:9px 3px 7px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:all .15s;font-family:'Nunito Sans',sans-serif}
+.lb:active{transform:scale(.95)}
+.lb .le{font-size:19px}
+.lb .ll{font-size:9px;color:var(--t3)}
+.hb{background:var(--gl);border-radius:var(--rs);padding:11px 13px;font-size:13px;color:var(--gdp);line-height:1.5;margin-bottom:13px}
+.btn-p{width:100%;padding:13px;border-radius:var(--r);border:none;background:var(--green);color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s}
+.btn-p:active{background:var(--gd)}
+.btn-p:disabled{opacity:.6;cursor:not-allowed}
+.btn-s{width:100%;padding:11px;border-radius:var(--r);border:1.5px solid var(--border);background:transparent;color:var(--t2);font-family:'Nunito Sans',sans-serif;font-size:13px;cursor:pointer;margin-top:8px}
+.sg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:14px}
+.sc{border-radius:var(--r);border:1.5px solid transparent;padding:12px 8px;text-align:center}
+.sc .sl2{font-size:10px;font-weight:700;margin-bottom:3px}
+.sc .sn{font-family:'Nunito',sans-serif;font-size:25px;font-weight:800}
+.sc .ss{font-size:10px;margin-top:2px}
+.br{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.bn{font-size:11px;font-weight:700;width:48px;flex-shrink:0;color:var(--t2)}
+.bt{flex:1;height:7px;background:var(--gl);border-radius:99px;overflow:hidden}
+.bf{height:7px;border-radius:99px;transition:width .8s ease}
+.bp{font-size:11px;font-weight:700;width:30px;text-align:right;flex-shrink:0}
+.ii{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px;display:flex;gap:11px;align-items:flex-start;margin-bottom:9px}
+.ii .ic{font-size:20px;flex-shrink:0;margin-top:2px}
+.ii .it{font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px}
+.ii .id{font-size:12px;color:var(--t2);line-height:1.5}
+.ai{background:var(--card);border:1.5px solid var(--green);border-radius:var(--r);padding:15px;font-size:14px;line-height:1.7;color:var(--text);margin-bottom:14px;white-space:pre-line}
+.dots{display:flex;gap:5px;align-items:center;padding:5px 0}
+.dots span{width:7px;height:7px;background:var(--green);border-radius:50%;animation:dot 1.2s ease-in-out infinite}
+.dots span:nth-child(2){animation-delay:.2s}
+.dots span:nth-child(3){animation-delay:.4s}
+@keyframes dot{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+.ca{display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
+.msg{max-width:87%;padding:11px 13px;font-size:14px;line-height:1.5}
+.msg.ai{background:var(--card);border:1px solid var(--border);color:var(--text);align-self:flex-start;border-radius:4px 15px 15px 15px}
+.msg.user{background:var(--green);color:#fff;align-self:flex-end;border-radius:15px 4px 15px 15px}
+.cf{padding:10px 18px 28px;background:var(--bg);border-top:1px solid var(--border);flex-shrink:0}
+.cr{display:flex;gap:8px}
+.ci{flex:1;border:1.5px solid var(--border);border-radius:99px;padding:10px 15px;font-size:14px;font-family:'Nunito Sans',sans-serif;color:var(--text);background:var(--card);outline:none}
+.ci:focus{border-color:var(--green)}
+.cs{width:40px;height:40px;border-radius:50%;background:var(--green);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dta{width:100%;min-height:120px;border:1.5px solid var(--border);border-radius:var(--r);padding:13px;font-size:14px;font-family:'Nunito Sans',sans-serif;color:var(--text);background:var(--card);resize:none;outline:none;line-height:1.6;margin-bottom:11px}
+.dta:focus{border-color:var(--green)}
+.chi{display:flex;align-items:center;gap:11px;background:var(--card);border:0.5px solid var(--border);border-radius:var(--rs);padding:11px 13px;cursor:pointer;margin-bottom:6px;transition:all .15s;user-select:none}
+.chb{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .15s}
+.chi.on{background:var(--cl);border-color:var(--coral)}
+.chi.on .chb{background:var(--coral);border-color:var(--coral);color:#fff}
+.chi.fis.on{background:var(--pl);border-color:var(--purple)}
+.chi.fis.on .chb{background:var(--purple);border-color:var(--purple);color:#fff}
+.chl{font-size:14px;color:var(--text);line-height:1.4}
+.cr2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:13px}
+.cc{background:var(--bg);border-radius:var(--rs);padding:11px;text-align:center}
+.cc .cn{font-size:24px;font-weight:700;margin-bottom:2px}
+.cc .cl{font-size:11px;color:var(--t3)}
+.mc{width:100%;display:flex;justify-content:center;margin-bottom:13px}
+.mi{background:var(--card);border:0.5px solid var(--border);border-radius:var(--rs);padding:11px 12px;margin-bottom:7px}
+.mi .mt{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.mi .mn{font-size:13px;color:var(--t2)}
+.mi .mv{font-size:16px;font-weight:700}
+.mi .mb{height:4px;border-radius:99px;background:var(--bg);overflow:hidden;margin-top:3px}
+.mi .mf{height:4px;border-radius:99px;transition:width .4s}
+.mi .ml{font-size:10px;margin-top:4px;font-weight:500}
+.pi{display:flex;align-items:center;gap:9px;background:var(--card);border:0.5px solid var(--border);border-radius:var(--rs);padding:10px 12px;margin-bottom:6px}
+.pk{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.pn{font-size:13px;color:var(--text);flex:1}
+.pv{font-size:13px;font-weight:700}
+.pb{font-size:10px;padding:2px 7px;border-radius:99px;font-weight:600}
+.bnav{display:flex;background:var(--card);border-top:1px solid var(--border);padding:6px 0 22px;flex-shrink:0}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:6px 0;font-family:'Nunito Sans',sans-serif}
+.nb svg{width:21px;height:21px;stroke-width:1.8;fill:none}
+.nb span{font-size:10px;font-weight:600}
+.nb.active svg{stroke:var(--green)}
+.nb.active span{color:var(--green)}
+.nb:not(.active) svg{stroke:var(--t3)}
+.nb:not(.active) span{color:var(--t3)}
+.ib{background:var(--green);border-radius:var(--r);padding:13px 15px;display:flex;align-items:center;gap:11px;margin-bottom:13px;cursor:pointer}
+.ib .it{flex:1}
+.ib .it1{font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:#fff}
+.ib .it2{font-size:12px;color:rgba(255,255,255,.8);margin-top:1px}
+.pat-btn{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--r);border:1.5px solid var(--border);background:var(--card);cursor:pointer;font-family:'Nunito Sans',sans-serif;text-align:left;transition:all .15s;width:100%;margin-bottom:7px}
+.pat-btn .pi2{font-size:21px;flex-shrink:0}
+.pat-btn .ptit{font-size:14px;font-weight:500;color:var(--text)}
+.pat-btn .psub{font-size:11px;color:var(--t3);margin-top:1px}
+.age-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:14px}
+.age-btn{padding:10px;border-radius:var(--r);border:1.5px solid var(--border);background:var(--card);cursor:pointer;font-family:'Nunito Sans',sans-serif;font-size:13px;font-weight:500;color:var(--t2);text-align:center;transition:all .15s}
+.age-btn.on{border-color:var(--green);background:var(--gl);color:var(--gdp)}
+.verse-card{border-radius:var(--r);border:0.5px solid var(--border);padding:15px;margin-bottom:8px;background:var(--card)}
+.verse-card .vt{font-size:14px;color:var(--text);line-height:1.6;font-style:italic;margin-bottom:7px}
+.verse-card .vr{font-size:12px;font-weight:500}
+.mg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.mc2{border-radius:var(--r);border:0.5px solid var(--border);padding:12px;background:var(--card)}
+.mc2 .me{font-size:19px;margin-bottom:5px}
+.mc2 .mtit{font-size:13px;font-weight:500;color:var(--text);line-height:1.3;margin-bottom:2px}
+.mc2 .msub{font-size:11px;color:var(--t3)}
+.ex-item{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:var(--r);border:0.5px solid var(--border);background:var(--card);margin-bottom:8px}
+.ex-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0;margin-top:1px}
+.ex-t{font-size:14px;font-weight:500;color:var(--text);margin-bottom:2px}
+.ex-d{font-size:12px;color:var(--t2);line-height:1.5}
+.alert-box{border-radius:var(--r);border:2px solid var(--red);background:var(--rl);padding:15px;margin-bottom:13px}
+.alert-box .abt{font-size:14px;font-weight:500;color:var(--rd);margin-bottom:6px}
+.alert-box .abd{font-size:13px;color:#791F1F;line-height:1.5}
+.cvv-btn{display:block;width:100%;padding:12px;border-radius:var(--rs);border:none;background:var(--red);color:#fff;font-size:14px;font-weight:500;cursor:pointer;font-family:'Nunito Sans',sans-serif;margin-top:10px;text-align:center;text-decoration:none}
+
+.stab{flex:1;padding:9px 6px;border-radius:var(--rs);border:0.5px solid var(--border);background:var(--card);font-size:12px;font-weight:500;color:var(--t2);cursor:pointer;text-align:center;transition:all .15s}
+.stab.on{border-color:var(--green);background:var(--gl);color:var(--gdp)}
+.step-panel{display:none}
+.step-panel.on{display:block}
+.parea{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);padding:13px;margin-bottom:10px}
+.parea-top{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.parea-ic{width:36px;height:36px;border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.parea-name{font-size:14px;font-weight:500;color:var(--text)}
+.parea-sub{font-size:12px;color:var(--t2);margin-top:1px}
+.parea textarea{width:100%;min-height:75px;border:0.5px solid var(--border);border-radius:var(--rs);padding:10px 12px;font-size:13px;font-family:'Nunito Sans',sans-serif;color:var(--text);background:var(--card);resize:none;outline:none;line-height:1.6}
+.parea textarea:focus{border-color:var(--green)}
+.ai-sugg{background:var(--gl);border-radius:var(--rs);padding:10px 12px;font-size:13px;color:var(--gdp);line-height:1.5;margin-top:8px;display:none;white-space:pre-line}
+.pcrd{background:var(--card);border:1.5px solid var(--green);border-radius:var(--r);padding:15px;margin-bottom:11px}
+.pcrd-area{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.pcrd-text{font-size:14px;color:var(--text);line-height:1.7;font-style:italic}
+.ptask{background:var(--card);border:0.5px solid var(--border);border-radius:var(--r);padding:13px;margin-bottom:8px}
+.ptask-top{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.ptask-num{width:27px;height:27px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0}
+.ptask-title{font-size:14px;font-weight:500;color:var(--text)}
+.ptask-desc{font-size:12px;color:var(--t2);line-height:1.5}
+.ptask-check{display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer}
+.ptask-check input{width:18px;height:18px;cursor:pointer;accent-color:var(--green)}
+.ptask-check span{font-size:13px;color:var(--t2)}
+.pday{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;border:0.5px solid var(--border);background:var(--card);color:var(--t2)}
+.pday.done{background:var(--green);border-color:var(--green);color:#fff}
+.pday.today{border-color:var(--green);color:var(--green);font-weight:700}
+
+.login-wrap{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:32px 24px;text-align:center}
+.login-logo-big{width:72px;height:72px;border-radius:22px;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:34px;margin:0 auto 18px}
+.login-title{font-family:'Nunito',sans-serif;font-size:24px;font-weight:800;color:var(--text);margin-bottom:6px}
+.login-sub{font-size:14px;color:var(--t2);margin-bottom:32px;line-height:1.6;max-width:280px}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;max-width:300px;padding:14px 20px;border-radius:var(--r);border:1.5px solid var(--border);background:var(--card);font-size:15px;font-weight:600;color:var(--text);cursor:pointer;font-family:'Nunito',sans-serif;transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.btn-google:active{transform:scale(.98)}
+.btn-google img{width:22px;height:22px}
+.login-note{font-size:12px;color:var(--t3);margin-top:20px;line-height:1.6;max-width:260px}
+.user-bar{display:flex;align-items:center;gap:8px}
+.user-bar img{width:28px;height:28px;border-radius:50%;object-fit:cover;border:1.5px solid var(--gl)}
+.user-bar span{font-size:13px;font-weight:500;color:var(--text)}
+.user-bar button{font-size:11px;color:var(--t3);background:none;border:none;cursor:pointer;font-family:'Nunito Sans',sans-serif;padding:0}
+.vinculo-box{background:var(--gl);border-radius:var(--rs);padding:12px 14px;font-size:13px;color:var(--gdp);word-break:break-all;margin-bottom:10px;display:none}
+
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- HOME -->
+<!-- LOGIN -->
+<div id="s-login" class="screen active">
+  <div class="login-wrap">
+    <div class="login-logo-big">🌱</div>
+    <div class="login-title">FlorescerIA</div>
+    <div class="login-sub">Identifique seus padrões e encontre o caminho para florescer com o Método CIS.</div>
+    <button class="btn-google" onclick="window.fbLogin()">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+      Entrar com Google
+    </button>
+    <div class="login-note">Seus dados ficam salvos com segurança na nuvem e acessíveis em qualquer dispositivo.</div>
+  </div>
+</div>
+
+<div id="s-home" class="screen" style="display:none">
+  <div class="topbar">
+    <div class="topbar-logo">🌱</div>
+    <span class="topbar-title">FlorescerIA</span>
+    <div class="user-bar" style="margin-left:auto">
+      <img id="user-avatar" src="" alt="avatar" style="display:none" onload="this.style.display='block'">
+      <span id="user-nome">Olá</span>
+      <button onclick="window.fbLogout().then(()=>window.showLoginScreen())">Sair</button>
+    </div>
+  </div>
+  <div class="scroll">
+    <div id="inst-banner" class="ib" style="display:none" onclick="installPWA()">
+      <div style="font-size:22px">📲</div>
+      <div class="it"><div class="it1">Instalar na tela inicial</div><div class="it2">Use como um app de verdade</div></div>
+      <div style="color:#fff;font-size:18px">›</div>
+    </div>
+    <div class="hero" style="background:linear-gradient(135deg,var(--green),var(--gd))">
+      <div class="gr">Olá 👋 Bem-vindo(a)</div>
+      <div class="ti">Como você está se sentindo hoje?</div>
+      <div class="su">Identifique seus padrões e encontre o caminho para florescer.</div>
+    </div>
+    <div class="sl">O que você quer fazer?</div>
+    <div class="og">
+      <div class="oc" onclick="nav('quiz')"><div class="oi">📋</div><div class="ol">Questionário CIS</div><div class="od">SOU · FAÇO · TENHO</div></div>
+      <div class="oc" onclick="nav('checklist')"><div class="oi">✅</div><div class="ol">Sintomas</div><div class="od">Checklist completo</div></div>
+      <div class="oc" onclick="nav('maas')"><div class="oi">🎯</div><div class="ol">MAAS</div><div class="od">Roda da vida</div></div>
+      <div class="oc" onclick="nav('caminhos')"><div class="oi">🌿</div><div class="ol">Caminhos de saída</div><div class="od">Filmes · bíblia · exercícios</div></div>
+    </div>
+    <div class="og" style="margin-bottom:0">
+      <div class="oc" onclick="nav('diary')"><div class="oi">📓</div><div class="ol">Diário livre</div><div class="od">Escreva o que sente</div></div>
+      <div class="oc" onclick="nav('chat')"><div class="oi">💬</div><div class="ol">Conversar</div><div class="od">Bate-papo com IA</div></div>
+    </div>
+    <div class="og" style="margin-bottom:0">
+      <div class="oc" onclick="nav('profecia')" style="grid-column:span 2"><div class="oi">🔮</div><div class="ol">Profecia + Reprogramação</div><div class="od">Reescreva sua história</div></div>
+    </div>
+    <div class="sl" style="margin-top:14px">Para responsáveis</div>
+    <div class="card" style="display:flex;gap:11px;align-items:center;cursor:pointer" onclick="window.location.href='painel.html'">
+      <div style="width:38px;height:38px;border-radius:11px;background:var(--pl);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">👨‍👩‍👧</div>
+      <div style="flex:1"><div style="font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px">Painel do Responsável</div><div style="font-size:12px;color:var(--t2)">Acompanhe a jornada como pai, mãe ou educador</div></div>
+      <div style="font-size:18px;color:var(--t3)">›</div>
+    </div>
+    <div class="sl" style="margin-top:4px">Vincular responsável</div>
+    <div class="card">
+      <div style="font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:10px">Gere um link e envie para o pai, mãe ou educador acompanhar sua jornada.</div>
+      <div class="vinculo-box" id="vinculo-link-box"></div>
+      <button class="btn-p" id="btn-gerar-vinculo" onclick="gerarVinculo()">🔗 Gerar link de vínculo</button>
+    </div>
+    <div class="sl" style="margin-top:14px">Sobre o método</div>
+    <div class="card" style="display:flex;gap:11px;align-items:flex-start">
+      <div style="font-size:20px;flex-shrink:0">💡</div>
+      <div><div style="font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px">Matriz do Valor Humano</div><div style="font-size:13px;color:var(--t2);line-height:1.5">Ninguém consegue viver sem encontrar valor em si. Você possui três fontes únicas: quem você é, o que faz e o que tem.</div></div>
+    </div>
+  </div>
+  <div class="bnav">
+    <button class="nb active" onclick="nav('home')"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg><span>Início</span></button>
+    <button class="nb" onclick="nav('quiz')"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg><span>CIS</span></button>
+    <button class="nb" onclick="nav('maas')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>MAAS</span></button>
+    <button class="nb" onclick="nav('profecia')"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span>Profecia</span></button>
+    <button class="nb" onclick="nav('chat')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span>Chat</span></button>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="s-quiz" class="screen" style="display:none">
+  <div class="topbar"><button class="btn-back" onclick="nav('home')"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Voltar</button></div>
+  <div class="scroll" id="quiz-scroll">
+    <div style="margin-bottom:14px">
+      <div style="font-size:12px;color:var(--t2);margin-bottom:5px;display:flex;justify-content:space-between"><span id="prog-txt">Pergunta 1 de 12</span><span id="prog-pct">8%</span></div>
+      <div class="pt"><div class="pf" id="prog-fill" style="width:8%"></div></div>
+    </div>
+    <div id="crenca-hdr" style="display:flex;align-items:center;gap:11px;padding:13px 14px;border-radius:var(--r);margin-bottom:13px"></div>
+    <div class="qcard"><div class="qt" id="q-text"></div><div class="lk" id="likert-row"></div></div>
+    <div class="hb" id="hint-box"></div>
+    <button class="btn-p" id="btn-next" style="display:none" onclick="nextQ()">Próxima →</button>
+  </div>
+</div>
+
+<!-- RESULT CIS -->
+<div id="s-result" class="screen" style="display:none">
+  <div class="topbar"><button class="btn-back" onclick="nav('home')"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Início</button><span class="topbar-title">Diagnóstico CIS</span></div>
+  <div class="scroll">
+    <div style="text-align:center;padding:4px 0 16px"><div style="font-size:34px;margin-bottom:7px">🌱</div><div style="font-family:'Nunito',sans-serif;font-size:19px;font-weight:800;color:var(--text);margin-bottom:3px" id="r-title"></div><div style="font-size:13px;color:var(--t2)" id="r-sub"></div></div>
+    <div class="sl">Crenças avaliadas</div>
+    <div class="sg" id="score-grid"></div>
+    <div class="sl">Força de cada crença</div>
+    <div id="bars" style="margin-bottom:14px"></div>
+    <div class="sl">Insights</div>
+    <div id="insights" style="margin-bottom:12px"></div>
+    <div class="sl">Análise da IA</div>
+    <div class="ai" id="ai-r"><div class="dots"><span></span><span></span><span></span></div></div>
+    <button class="btn-p" onclick="nav('caminhos')">🌿 Ver caminhos de saída</button>
+    <button class="btn-s" onclick="nav('quiz')">Refazer o questionário</button>
+  </div>
+</div>
+
+<!-- CHECKLIST -->
+<div id="s-checklist" class="screen" style="display:none">
+  <div class="topbar"><button class="btn-back" onclick="nav('home')"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Voltar</button><span class="topbar-title">Sintomas</span></div>
+  <div class="scroll">
+    <div class="hero" style="background:linear-gradient(135deg,var(--coral),var(--cd))">
+      <div class="gr">✅ Checklist completo</div>
+      <div class="ti">Identificando a baixa autoestima</div>
+      <div class="su">Marque os sintomas que você reconhece em si mesmo.</div>
+    </div>
+    <div class="cr2">
+      <div class="cc"><div class="cn" id="chk-cnt" style="color:var(--coral)">0</div><div class="cl">marcados</div></div>
+      <div class="cc"><div class="cn" id="chk-pct" style="color:var(--green)">0%</div><div class="cl">identificado</div></div>
+    </div>
+    <div class="pt"><div class="pf" id="chk-prog" style="width:0%;background:var(--coral)"></div></div>
+    <div class="sl" style="color:var(--cd)">Sintomas comportamentais</div>
+    <div id="chk-comp"></div>
+    <div class="sl" style="color:var(--pd);margin-top:4px">Sintomas físicos</div>
+    <div id="chk-fis"></div>
+    <button class="btn-p" id="chk-btn" onclick="analyzeChecklist()" disabled style="margin-top:4px">✨ Analisar com IA</button>
+    <button class="btn-s" onclick="clearChecklist()">Limpar seleção</button>
+    <div id="chk-result" style="display:none;margin-top:16px">
+      <div class="sl">Diagnóstico</div>
+      <div id="chk-level" class="card" style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px"></div>
+      <div class="sl">Análise da IA</div>
+      <div class="ai" id="chk-ai"><div class="dots"><span></span><span></span><span></span></div></div>
+      <button class="btn-p" onclick="nav('caminhos')">🌿 Ver caminhos de saída</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAAS -->
+<div id="s-maas" class="screen" style="display:none">
+  <div class="topbar"><button class="btn-back" onclick="nav('home')"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Voltar</button><span class="topbar-title">MAAS</span></div>
+  <div class="scroll">
+    <div class="hero" style="background:linear-gradient(135deg,var(--purple),var(--pd))">
+      <div class="gr">🎯 Mapa de Autoavaliação Sistêmico</div>
+      <div class="ti">Avalie cada área da sua vida</div>
+      <div class="su">Mova os sliders de 1 a 10. A roda se atualiza em tempo real.</div>
+    </div>
+    <div class="mc"><canvas id="maas-radar" width="300" height="300" role="img" aria-label="Roda da vida MAAS com 11 dimensões">Roda da vida com 11 dimensões.</canvas></div>
+    <div class="cr2">
+      <div class="cc"><div class="cn" id="maas-avg" style="color:var(--purple)">5.0</div><div class="cl">média geral</div></div>
+      <div class="cc"><div class="cn" id="maas-low" style="font-size:13px;padding-top:5px;color:var(--red)">—</div><div class="cl">mais crítica</div></div>
+    </div>
+    <div class="sl">Ajuste cada área</div>
+    <div id="maas-sliders"></div>
+    <div class="sl" style="margin-top:4px">Top 5 prioridades</div>
+    <div id="maas-priority" style="margin-bottom:13px"></div>
+    <button class="btn-p" onclick="analyzeMAAS()">✨ Analisar com IA</button>
+    <div class="ai" id="maas-ai" style="display:none;margin-top:13px"></div>
+    <button class="btn-s" style="margin-top:8px" onclick="nav('caminhos')">🌿 Ver caminhos de saída</button>
+  </div>
+</div>
+
+<!-- CAMINHOS DE SAÍDA -->
+<div id="s-caminhos" class="screen" style="display:none">
+  <div class="topbar"><button class="btn-back" onclick="nav('home')"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Voltar</button><span class="topbar-title">Caminhos de saída</span></div>
+  <div class="scroll">
+    <div class="hero" style="background:linear-gradient(135deg,#1D9E75,#085041)">
+      <div class="gr">🌿 Seu caminho personalizado</div>
+      <div class="ti">Versículos, filmes e exercícios</div>
+      <div class="su">Escolha um padrão identificado e receba conteúdo para te ajudar a crescer.</div>
+    </div>
+    <div class="sl">Faixa etária</div>
+    <div class="age-row">
+      <button class="age-btn on" id="age-child" onclick="setAge('child')">Criança (6–12 anos)</button>
+      <button class="age-btn" id="age-teen" onclick="setAge('teen')">Adolescente (13–17 anos)</button>
+    </div>
+    <div class="sl">Padrão identificado</div>
+    <div id="pattern-list"></div>
+    <div id="caminho-content" style="display:none;margin-top:4px">
+      <div class="sl">📖 Palavra para o coração</div>
+      <div id="cam-verses"></div>
+      <div class="sl" style="margin-top:4px">🎬 Assista e reflita</div>
+      <div class="mg" id="cam-media"></div>
+      <div class="sl" style="margin-top:4px">💪 Exercícios do Método CIS</div>
+      <div id="cam-exercises"></div>
+      <div id="cam-alert"></div>
+      <button class="btn-p" onclick="nav('chat')">💬 Conversar sobre isso com a IA</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROFECIA + REPROGRAMAÇÃO -->
+<div id="s-profecia" class="screen" style="display:none">
+  <div class="topbar"><button class="btn-back" onclick="nav('home')"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Voltar</button><span class="topbar-title">Profecia + Reprogramação</span></div>
+  <div class="scroll" id="prof-scroll">
+    <div class="hero" style="background:linear-gradient(135deg,#534AB7,#3C3489)">
+      <div class="gr">✨ Reescreva sua história</div>
+      <div class="ti">Profecia + Reprogramação</div>
+      <div class="su">Construa sua visão, declare e reprograme suas crenças diariamente.</div>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:16px" id="prof-tabs">
+      <button class="stab on" onclick="setProfStep(0)">1. Profecia</button>
+      <button class="stab" onclick="setProfStep(1)">2. Declaração</button>
+      <button class="stab" onclick="setProfStep(2)">3. Reprogramação</button>
+    </div>
+    <!-- STEP 1 -->
+    <div id="pp0" class="step-panel on">
+      <div class="sl">Suas 3 áreas para transformar</div>
+      <div style="background:var(--bg);border-radius:var(--rs);padding:11px 13px;font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:13px">"Agora, escreva uma profecia no presente sobre sua vida extraordinária. Foque nas áreas que mais precisam de transformação." — Método CIS</div>
+      <div id="prof-areas"></div>
+      <button class="btn-p" onclick="setProfStep(1)">Próximo: Declaração →</button>
+    </div>
+    <!-- STEP 2 -->
+    <div id="pp1" class="step-panel" style="display:none">
+      <div class="sl">Sua profecia pessoal</div>
+      <div style="background:var(--bg);border-radius:var(--rs);padding:11px 13px;font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:13px">"Só uma pessoa extraordinária fala o contrário do que está vendo." — Método CIS</div>
+      <div id="prof-display"></div>
+      <div style="background:var(--pl);border-radius:var(--rs);padding:10px 12px;font-size:13px;color:var(--pd);line-height:1.5;font-style:italic;margin-bottom:8px">"Não havendo profecia, o povo se corrompe."<div style="font-size:11px;color:var(--purple);margin-top:4px;font-style:normal;font-weight:500">Provérbios 29:18</div></div>
+      <div style="background:var(--pl);border-radius:var(--rs);padding:10px 12px;font-size:13px;color:var(--pd);line-height:1.5;font-style:italic;margin-bottom:8px">"A língua tem poder para trazer vida ou para trazer morte."<div style="font-size:11px;color:var(--purple);margin-top:4px;font-style:normal;font-weight:500">Provérbios 18:21</div></div>
+      <div style="background:var(--gl);border-radius:var(--rs);padding:11px 13px;margin-bottom:13px">
+        <div style="font-size:13px;font-weight:500;color:var(--gdp);margin-bottom:3px">🎯 Teorema do Estímulo</div>
+        <div style="font-size:12px;color:var(--gd);line-height:1.5">Estímulo certo + intensidade certa + tempo necessário = novas sinapses = nova crença. Declare com emoção, todos os dias.</div>
+      </div>
+      <button class="btn-p" onclick="setProfStep(2)">Próximo: Reprogramação diária →</button>
+      <button class="btn-s" onclick="setProfStep(0)">← Editar profecias</button>
+    </div>
+    <!-- STEP 3 -->
+    <div id="pp2" class="step-panel" style="display:none">
+      <div class="sl">Reprogramação diária</div>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:13px">
+        <div style="background:var(--bg);border-radius:var(--rs);padding:11px;text-align:center"><div style="font-size:22px;font-weight:700;color:var(--green)" id="pstreak">0</div><div style="font-size:11px;color:var(--t3)">dias consecutivos</div></div>
+        <div style="background:var(--bg);border-radius:var(--rs);padding:11px;text-align:center"><div style="font-size:22px;font-weight:700;color:var(--purple)" id="pdone">0/5</div><div style="font-size:11px;color:var(--t3)">tarefas hoje</div></div>
+      </div>
+      <div class="sl">Últimos 7 dias</div>
+      <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap" id="prof-days"></div>
+      <div class="sl">Estímulos de hoje</div>
+      <div id="prof-tasks"></div>
+      <div id="prof-congrats" style="display:none;background:var(--gl);border-radius:var(--r);padding:14px;text-align:center;margin-top:4px">
+        <div style="font-size:24px;margin-bottom:6px">🌟</div>
+        <div style="font-size:14px;font-weight:500;color:var(--gdp);margin-bottom:3px">Dia completo!</div>
+        <div style="font-size:12px;color:var(--gd);line-height:1.5">Você deu os estímulos certos hoje. As sinapses estão se formando. Continue amanhã!</div>
+      </div>
+      <button class="btn-p" style="margin-top:14px" onclick="nav('chat')">💬 Conversar sobre minha jornada</button>
+    </div>
+  </div>
+</div>
+
+<!-- DIARY -->
+<div id="s-diary" class="screen" style="display:none">
+  <div class="topbar"><button class="btn-back" onclick="nav('home')"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Voltar</button><span class="topbar-title">Diário livre</span></div>
+  <div class="scroll">
+    <div class="hero" style="background:linear-gradient(135deg,var(--purple),var(--pd))">
+      <div class="gr">📓 Escreva com liberdade</div>
+      <div class="ti">O que está passando pela sua cabeça?</div>
+      <div class="su">A IA analisa e identifica suas crenças CIS.</div>
+    </div>
+    <textarea class="dta" id="diary-ta" placeholder="Hoje eu me senti...&#10;&#10;Algo que me incomodou foi...&#10;&#10;Sobre mim mesmo(a), eu penso que..."></textarea>
+    <button class="btn-p" id="diary-btn" onclick="analyzeDiary()">✨ Analisar com IA</button>
+    <div id="diary-result" style="display:none;margin-top:13px">
+      <div class="sl">Análise da IA</div>
+      <div class="ai" id="diary-ai"></div>
+      <button class="btn-s" onclick="nav('caminhos')">🌿 Ver caminhos de saída</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div id="s-chat" class="screen" style="display:none;flex-direction:column">
+  <div class="topbar"><button class="btn-back" onclick="nav('home')"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Voltar</button><span class="topbar-title">Conversa com IA</span><div style="width:30px;height:30px;border-radius:50%;background:var(--gl);display:flex;align-items:center;justify-content:center;margin-left:auto;font-size:15px">🌱</div></div>
+  <div class="scroll" id="chat-scroll"><div class="ca" id="chat-msgs"><div class="msg ai">Olá! Sou sua assistente do FlorescerIA 🌱<br><br>Pode me contar como você está se sentindo hoje. Estou aqui para ouvir com atenção e sem julgamentos.</div></div></div>
+  <div class="cf"><div class="cr"><input class="ci" id="chat-in" type="text" placeholder="Digite sua mensagem..."><button class="cs" onclick="sendChat()" aria-label="Enviar"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button></div></div>
+</div>
+
+</div>
+<script>
+const PQ=[
+  {c:'sou',t:'Identidade',cor:'#1D9E75',bg:'#E1F5EE',tc:'#085041',q:'Quando você pensa em si mesmo(a), você se vê como uma pessoa de valor?',h:'A identidade é a raiz da autoestima. Como você se define molda tudo.'},
+  {c:'sou',t:'Identidade',cor:'#1D9E75',bg:'#E1F5EE',tc:'#085041',q:'Com que frequência você sente que é inferior às outras pessoas?',h:'Comparar-se constantemente é sinal de identidade fragilizada.'},
+  {c:'sou',t:'Identidade',cor:'#1D9E75',bg:'#E1F5EE',tc:'#085041',q:'Você consegue gostar genuinamente de quem você é — além da aparência?',h:'Gostar de quem você é por dentro é o fundamento do SOU.'},
+  {c:'sou',t:'Identidade',cor:'#1D9E75',bg:'#E1F5EE',tc:'#085041',q:'Quando alguém te elogia, você consegue aceitar sem desconfiar?',h:'Dificuldade em aceitar elogios indica crença de identidade negativa.'},
+  {c:'faco',t:'Capacidade',cor:'#534AB7',bg:'#EEEDFE',tc:'#26215C',q:'Quando enfrenta um desafio novo, você acredita que é capaz de superar?',h:'A crença de capacidade define se você age ou paralisa diante de desafios.'},
+  {c:'faco',t:'Capacidade',cor:'#534AB7',bg:'#EEEDFE',tc:'#26215C',q:'Com que frequência desiste antes de tentar por achar que não vai conseguir?',h:'Procrastinação e medo de tentar são sintomas da capacidade baixa.'},
+  {c:'faco',t:'Capacidade',cor:'#534AB7',bg:'#EEEDFE',tc:'#26215C',q:'Você acredita que suas conquistas são fruto da sua competência?',h:'Atribuir sucessos à sorte pode ser síndrome do impostor.'},
+  {c:'faco',t:'Capacidade',cor:'#534AB7',bg:'#EEEDFE',tc:'#26215C',q:'Quando erra, você consegue aprender sem se punir demais?',h:'A autocrítica excessiva bloqueia a crença de capacidade.'},
+  {c:'tenho',t:'Merecimento',cor:'#D85A30',bg:'#FAECE7',tc:'#4A1B0C',q:'Você sente que merece ser amado(a) e valorizado(a) do jeito que você é?',h:'O merecimento é a crença mais profunda — base do amor-próprio.'},
+  {c:'tenho',t:'Merecimento',cor:'#D85A30',bg:'#FAECE7',tc:'#4A1B0C',q:'Você costuma se colocar em último lugar, priorizando os outros antes de si?',h:'Não se priorizar é sinal claro de baixa crença de merecimento.'},
+  {c:'tenho',t:'Merecimento',cor:'#D85A30',bg:'#FAECE7',tc:'#4A1B0C',q:'Você consegue pedir ajuda sem sentir que está incomodando?',h:'Sentir que incomoda indica que você não se sente merecedor(a) de suporte.'},
+  {c:'tenho',t:'Merecimento',cor:'#D85A30',bg:'#FAECE7',tc:'#4A1B0C',q:'Quando algo bom acontece, você consegue desfrutar sem esperar o pior?',h:'Dificuldade de desfrutar o bom é sinal de merecimento fragilizado.'}
+];
+const OPC=[{e:'😟',l:'Nunca',v:1},{e:'😕',l:'Raramente',v:2},{e:'😐',l:'Às vezes',v:3},{e:'🙂',l:'Quase',v:4},{e:'😊',l:'Sempre',v:5}];
+const COMP=['Agressividade','Timidez','Arrogância','Impaciência','Riso falso','Sentir-se melhor que os outros','Competitividade em excesso','Subserviência','Ser perdedor(a) nato(a)','Prepotência','Perfeccionismo','Procrastinação','Dependência química','Falar em excesso','Vício em séries / telas','Se sentir dono(a) da verdade','Rebeldia à autoridade','Ansiedade','Vacilação','Desgostar-se','Falta de autoaprovação','Necessidade de aprovação e aceitação','Insegurança','Baixa afetividade','Vergonha crônica','Ser cumpridor(a) de expectativas alheias','Necessidade extrema de sucesso','Desconfiança','Ser adorador(a) de heróis de TV'];
+const FIS=['Voz frágil, infantilizada ou impostada','Corpo arqueado e relaxado na aparência','Não olha nos olhos','Tenso(a) e nervoso(a)','Obesidade','Olhos sem brilho','Postura corporal sem expressão'];
+const MA=[{n:'Emocional',c:'#D4537E'},{n:'Espiritual',c:'#534AB7'},{n:'Parentes',c:'#1D9E75'},{n:'Conjugal',c:'#D85A30'},{n:'Filhos',c:'#639922'},{n:'Social',c:'#378ADD'},{n:'Saúde',c:'#E24B4A'},{n:'Servir',c:'#BA7517'},{n:'Intelectual',c:'#0F6E56'},{n:'Financeiro',c:'#854F0B'},{n:'Profissional',c:'#993556'}];
+const PATTERNS=[
+  {id:'autoestima',icon:'🪞',title:'Baixa autoestima',sub:'Insegurança, autocrítica, se sentir inferior',cor:'#D85A30',bg:'#FAECE7'},
+  {id:'ansiedade',icon:'😰',title:'Ansiedade e medo',sub:'Preocupação excessiva, nervosismo, vacilação',cor:'#534AB7',bg:'#EEEDFE'},
+  {id:'rejeicao',icon:'💔',title:'Medo de rejeição',sub:'Necessidade de aprovação, timidez, isolamento',cor:'#D4537E',bg:'#FBEAF0'},
+  {id:'comparacao',icon:'👥',title:'Comparação social',sub:'Se sentir menos, inveja, competitividade',cor:'#BA7517',bg:'#FAEEDA'},
+  {id:'proposito',icon:'🌱',title:'Falta de propósito',sub:'Sem direção, desmotivação, vazio interior',cor:'#1D9E75',bg:'#E1F5EE'},
+  {id:'critico',icon:'🆘',title:'Sinal de atenção',sub:'Muitos sintomas — precisa de apoio especial',cor:'#E24B4A',bg:'#FCEBEB'},
+];
+const CONTENT={
+  autoestima:{
+    verses:[{t:'"Tu me formaste de modo assombroso e maravilhoso. Louvo-te porque sou feito de modo espantoso."',r:'Salmos 139:14'},{t:'"Porque eu sei os planos que tenho para vocês — planos de prosperidade e não de calamidade, para dar a vocês um futuro e uma esperança."',r:'Jeremias 29:11'}],
+    mc:[{e:'🎬',t:'Soul (Pixar)',s:'Você tem um propósito único'},{e:'🎬',t:'Moana',s:'Descubra quem você é'},{e:'📺',t:'Bluey',s:'Autoconfiança em família'},{e:'📺',t:'Miraculous Ladybug',s:'Acreditar em si mesmo'}],
+    mt:[{e:'🎬',t:'Extraordinário',s:'Ser único é uma força'},{e:'🎬',t:'Divertida Mente 2',s:'Identidade na adolescência'},{e:'🎬',t:'O Menino que Descobriu o Vento',s:'Acreditar no potencial'},{e:'🎬',t:'Sing',s:'Coragem de ser você'}],
+    ex:[{n:1,t:'Espelho do SOU',d:'Escreva 5 qualidades que você admira em si mesmo. Leia em voz alta olhando no espelho todos os dias por 7 dias.'},{n:2,t:'Carta para você mesmo',d:'Escreva uma carta carinhosa para você como se fosse para um grande amigo. Use palavras de encorajamento.'},{n:3,t:'Diário de conquistas',d:'Antes de dormir, anote 3 coisas que você fez bem hoje — por menores que pareçam.'}],
+    alert:false},
+  ansiedade:{
+    verses:[{t:'"Não andeis ansiosos por coisa alguma; antes, em tudo, pela oração e súplica, com ações de graça, os vossos pedidos sejam conhecidos diante de Deus."',r:'Filipenses 4:6'},{t:'"Lançando sobre ele toda a vossa ansiedade, porque ele tem cuidado de vós."',r:'1 Pedro 5:7'}],
+    mc:[{e:'📺',t:'Divertida Mente',s:'Entender e aceitar as emoções'},{e:'🎬',t:'Encanto',s:'Pressão e autoaceitação'},{e:'📺',t:'Peppa Pig',s:'Momentos de calma'},{e:'📺',t:'Bluey — Calypso',s:'Respira e vai com calma'}],
+    mt:[{e:'🎬',t:'Divertida Mente 2',s:'Ansiedade na adolescência'},{e:'🎬',t:'Encanto',s:'Pressão de ser perfeito'},{e:'🎬',t:'À Procura de Nemo',s:'Encarar o medo'},{e:'🎬',t:'A Cabana',s:'Fé em momentos difíceis'}],
+    ex:[{n:1,t:'Respiração 4-7-8',d:'Inspire 4 segundos, segure 7, expire 8. Repita 4 vezes quando sentir ansiedade chegando.'},{n:2,t:'Âncora do presente',d:'Nomeie: 5 coisas que você VÊ, 4 que TOCA, 3 que OUVE, 2 que CHEIRA, 1 que PROVA.'},{n:3,t:'Conversa com Deus',d:'Escreva uma oração curta entregando sua preocupação. Leia sempre que a ansiedade voltar.'}],
+    alert:false},
+  rejeicao:{
+    verses:[{t:'"Ainda que meu pai e minha mãe me abandonassem, o Senhor me acolheria."',r:'Salmos 27:10'},{t:'"Nada temas, porque eu sou contigo; não te assombres, porque eu sou o teu Deus."',r:'Isaías 41:10'}],
+    mc:[{e:'🎬',t:'Luca (Pixar)',s:'Amizade e pertencimento'},{e:'🎬',t:'Ratatouille',s:'Ser diferente pode ser lindo'},{e:'📺',t:'Turma da Mônica',s:'Amizade e aceitação'},{e:'🎬',t:'Dumbo',s:'Sua diferença é seu superpoder'}],
+    mt:[{e:'🎬',t:'Extraordinário',s:'Ser aceito como você é'},{e:'🎬',t:'Simone',s:'Autenticidade vs aprovação'},{e:'🎬',t:'A Culpa é das Estrelas',s:'Conexão genuína'},{e:'🎬',t:'O Clube do Imperador',s:'Identidade e integridade'}],
+    ex:[{n:1,t:'Mapa do pertencimento',d:'Liste 3 pessoas que genuinamente te aceitam. Envie uma mensagem de gratidão para uma delas hoje.'},{n:2,t:'Desafio da autenticidade',d:'Faça uma coisa hoje que você evitaria por medo do que os outros pensam.'},{n:3,t:'Afirmação do TENHO',d:'Repita 3 vezes ao acordar: "Eu mereço ser amado(a) do jeito que sou."'}],
+    alert:false},
+  comparacao:{
+    verses:[{t:'"Cada um examine a sua própria obra e, assim, terá motivo de orgulho somente em si mesmo, e não em comparação com outros."',r:'Gálatas 6:4'},{t:'"Porque somos feitura dele, criados em Cristo Jesus para as boas obras, as quais Deus de antemão preparou para que andássemos nelas."',r:'Efésios 2:10'}],
+    mc:[{e:'🎬',t:'Valente (Pixar)',s:'Seu caminho é único'},{e:'🎬',t:'Sing',s:'Cada um brilha do seu jeito'},{e:'📺',t:'Doc McStuffins',s:'Seus dons são especiais'},{e:'🎬',t:'Zootopia',s:'Seja você, não os outros'}],
+    mt:[{e:'🎬',t:'O Diabo Veste Prada',s:'Autenticidade vs pressão'},{e:'🎬',t:'Juno',s:'Ser fiel a si mesmo'},{e:'🎬',t:'O Rei Leão',s:'Encontre seu caminho'},{e:'🎬',t:'Whiplash',s:'Perfeccionismo e identidade'}],
+    ex:[{n:1,t:'Detox de comparação',d:'Por 7 dias, toda vez que se comparar escreva: "Eu sou único(a) e minha jornada é diferente."'},{n:2,t:'Gratidão pelo SOU',d:'Escreva 3 conquistas suas — só suas. Não compare com ninguém.'},{n:3,t:'Foque no FAÇO',d:'Defina uma meta pequena SUA para essa semana. Celebre ao completar.'}],
+    alert:false},
+  proposito:{
+    verses:[{t:'"Porque somos feitura dele, criados em Cristo Jesus para as boas obras, as quais Deus de antemão preparou para que andássemos nelas."',r:'Efésios 2:10'},{t:'"O ladrão vem somente para roubar, matar e destruir; eu vim para que tenham vida, e a tenham em abundância."',r:'João 10:10'}],
+    mc:[{e:'🎬',t:'Soul (Pixar)',s:'O que nos faz vivos'},{e:'🎬',t:'Moana',s:'Seguir o chamado do coração'},{e:'🎬',t:'Bee Movie',s:'Todo papel tem valor'},{e:'📺',t:'Bluey',s:'O presente já é o propósito'}],
+    mt:[{e:'🎬',t:'Soul (Pixar)',s:'O que dá sentido à vida?'},{e:'🎬',t:'O Clube do Imperador',s:'Deixar um legado'},{e:'🎬',t:'O Menino que Descobriu o Vento',s:'Transformar o mundo'},{e:'🎬',t:'Sociedade dos Poetas Mortos',s:'Carpe diem'}],
+    ex:[{n:1,t:'MAVI do propósito',d:'Liste 3 pessoas que você admira e escreva as qualidades delas. Essas qualidades já estão em você.'},{n:2,t:'Missão pessoal',d:'Complete: "Eu nasci para..." — sem pensar demais, escreva o que vier ao coração.'},{n:3,t:'Uma ação hoje',d:'Faça uma coisa hoje alinhada com quem você quer ser. Não amanhã — hoje.'}],
+    alert:false},
+  critico:{
+    verses:[{t:'"Ele sara os de coração quebrantado e lhes aperta as feridas."',r:'Salmos 147:3'},{t:'"Vinde a mim, todos os que estais cansados e sobrecarregados, e eu vos aliviarei."',r:'Mateus 11:28'}],
+    mc:[{e:'🎬',t:'Divertida Mente',s:'Todas as emoções têm valor'},{e:'🎬',t:'Encanto',s:'Pedir ajuda é coragem'},{e:'📺',t:'Daniel Tiger',s:'É ok pedir ajuda'},{e:'🎬',t:'Luca',s:'Amigos ajudam a superar medos'}],
+    mt:[{e:'🎬',t:'Divertida Mente 2',s:'Buscar ajuda é força'},{e:'🎬',t:'A Cabana',s:'Cura emocional e fé'},{e:'🎬',t:'Extraordinário',s:'Você não está sozinho(a)'},{e:'🎬',t:'Querido Evan Hansen',s:'Saúde mental importa'}],
+    ex:[{n:1,t:'Fale com alguém hoje',d:'Escolha uma pessoa de confiança — pai, mãe, pastor, professor — e diga como está se sentindo de verdade.'},{n:2,t:'Oração de entrega',d:'"Senhor, estou cansado(a). Eu entrego minha dor para você. Me ajuda a encontrar o caminho." Repita todos os dias.'},{n:3,t:'CVV — você não está sozinho(a)',d:'Se sentir que está demais para carregar sozinho(a), ligue 188 (gratuito, 24h). Pedir ajuda é o maior ato de coragem.'}],
+    alert:true},
+};
+
+let curQ=0,respostas=[],chkSel=new Set(),maasVals=MA.map(()=>5),chatHist=[],maasChart=null,currentAge='child',deferredPrompt=null;
+
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('inst-banner').style.display='flex';});
+function installPWA(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;document.getElementById('inst-banner').style.display='none';}}
+
+function nav(id){
+  document.querySelectorAll('.screen').forEach(s=>{s.style.display='none';s.classList.remove('active')});
+  const el=document.getElementById('s-'+id);
+  el.style.display='flex';el.classList.add('active');
+  document.querySelectorAll('.nb').forEach((b,i)=>{
+    const ids=['home','quiz','maas','profecia','chat'];
+    b.classList.toggle('active',ids[i]===id);
+  });
+  if(id==='quiz'){curQ=0;respostas=[];renderQ();}
+  if(id==='maas'){setTimeout(initMAAS,60);}
+  if(id==='chat'){setTimeout(()=>document.getElementById('chat-in').focus(),100);}
+  if(id==='checklist'){initChecklist();}
+  if(id==='caminhos'){initCaminhos();}
+  if(id==='profecia'){initProfecia();}
+}
+
+function renderQ(){
+  const p=PQ[curQ];
+  const pct=Math.round((curQ+1)/PQ.length*100);
+  document.getElementById('prog-txt').textContent='Pergunta '+(curQ+1)+' de '+PQ.length;
+  document.getElementById('prog-pct').textContent=pct+'%';
+  const pf=document.getElementById('prog-fill');pf.style.width=pct+'%';pf.style.background=p.cor;
+  document.getElementById('crenca-hdr').innerHTML=`<div style="width:40px;height:40px;border-radius:11px;background:${p.bg};display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${p.c==='sou'?'🟢':p.c==='faco'?'🔵':'🟠'}</div><div><div style="font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;color:${p.cor}">${p.t}</div><div style="font-size:11px;color:${p.tc}">${p.c==='sou'?'Quem você acredita que é':p.c==='faco'?'O que você acredita que consegue':'O que você acredita que merece'}</div></div><span style="margin-left:auto;font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;background:${p.bg};color:${p.tc}">${p.c.toUpperCase()}</span>`;
+  document.getElementById('crenca-hdr').style.background=p.bg;
+  document.getElementById('q-text').textContent=p.q;
+  document.getElementById('hint-box').textContent=p.h;
+  const row=document.getElementById('likert-row');row.innerHTML='';
+  OPC.forEach(o=>{
+    const btn=document.createElement('button');
+    btn.className='lb'+(respostas[curQ]===o.v?' sel':'');
+    if(respostas[curQ]===o.v){btn.style.background=p.bg;btn.style.borderColor=p.cor;}
+    btn.innerHTML=`<span class="le">${o.e}</span><span class="ll">${o.l}</span>`;
+    btn.onclick=()=>{row.querySelectorAll('.lb').forEach(b=>{b.className='lb';b.style.background='';b.style.borderColor='';});btn.className='lb sel';btn.style.background=p.bg;btn.style.borderColor=p.cor;respostas[curQ]=o.v;const nb=document.getElementById('btn-next');nb.style.display='block';nb.textContent=curQ===PQ.length-1?'Ver resultado 🎯':'Próxima →';};
+    row.appendChild(btn);
+  });
+  const nb=document.getElementById('btn-next');
+  if(respostas[curQ]){nb.style.display='block';nb.textContent=curQ===PQ.length-1?'Ver resultado 🎯':'Próxima →';}
+  else nb.style.display='none';
+  document.getElementById('quiz-scroll').scrollTop=0;
+}
+function nextQ(){if(curQ<PQ.length-1){curQ++;renderQ();}else showResultCIS();}
+
+function showResultCIS(){
+  nav('result');
+  const g={sou:[],faco:[],tenho:[]};
+  PQ.forEach((p,i)=>g[p.c].push(respostas[i]||3));
+  const avg=a=>Math.round(a.reduce((s,v)=>s+v,0)/a.length*10)/10;
+  const pct=a=>Math.round(a.reduce((s,v)=>s+v,0)/a.length/5*100);
+  const ms=avg(g.sou),mf=avg(g.faco),mt=avg(g.tenho);
+  const ps=pct(g.sou),pf=pct(g.faco),pt=pct(g.tenho);
+  const total=Math.round((ms+mf+mt)/3*10)/10;
+  const nivel=m=>m>=4.2?'Fortalecida':m>=3?'Em desenvolvimento':m>=2?'Fragilizada':'Muito fragilizada';
+  document.getElementById('r-title').textContent=total>=4?'Autoestima elevada 🌟':total>=3?'Em crescimento 🌱':total>=2?'Precisa de atenção 💛':'Momento de cuidar 🤍';
+  document.getElementById('r-sub').textContent='Pontuação geral: '+total.toFixed(1)+'/5';
+  const C={sou:{bg:'#E1F5EE',bc:'#1D9E75',fc:'#1D9E75',tc:'#085041'},faco:{bg:'#EEEDFE',bc:'#534AB7',fc:'#534AB7',tc:'#26215C'},tenho:{bg:'#FAECE7',bc:'#D85A30',fc:'#D85A30',tc:'#4A1B0C'}};
+  document.getElementById('score-grid').innerHTML=[{k:'sou',l:'Identidade',m:ms},{k:'faco',l:'Capacidade',m:mf},{k:'tenho',l:'Merecimento',m:mt}].map(x=>`<div class="sc" style="background:${C[x.k].bg};border-color:${C[x.k].bc}"><div class="sl2" style="color:${C[x.k].tc}">${x.l}</div><div class="sn" style="color:${C[x.k].fc}">${x.m.toFixed(1)}</div><div class="ss" style="color:${C[x.k].tc}">${nivel(x.m)}</div></div>`).join('');
+  document.getElementById('bars').innerHTML=[{n:'SOU',p:ps,c:'#1D9E75',tc:'#0F6E56'},{n:'FAÇO',p:pf,c:'#534AB7',tc:'#534AB7'},{n:'TENHO',p:pt,c:'#D85A30',tc:'#993C1D'}].map(x=>`<div class="br"><span class="bn">${x.n}</span><div class="bt"><div class="bf" style="width:${x.p}%;background:${x.c}"></div></div><span class="bp" style="color:${x.tc}">${x.p}%</span></div>`).join('');
+  const ins=[];
+  ins.push(ms<3?{i:'🔴',t:'Identidade fragilizada',d:'Você tende a se ver de forma negativa. Trabalhar o SOU é o primeiro passo.'}:{i:'🟢',t:'Identidade presente',d:'Você tem uma boa base de identidade. Continue fortalecendo.'});
+  ins.push(mf<3?{i:'🔴',t:'Capacidade limitante',d:'Você duvida do que consegue. O FAÇO está bloqueando seu crescimento.'}:{i:'🟣',t:'Capacidade em crescimento',d:'Você acredita em si. Expandir essa confiança abre novas possibilidades.'});
+  ins.push(mt<3?{i:'🔴',t:'Merecimento a desenvolver',d:'Crença mais profunda. Trabalhe quanto acredita que merece amor e sucesso.'}:{i:'🟠',t:'Merecimento presente',d:'Você reconhece seu valor, mas às vezes se coloca em último lugar.'});
+  document.getElementById('insights').innerHTML=ins.map(x=>`<div class="ii"><div class="ic">${x.i}</div><div><div class="it">${x.t}</div><div class="id">${x.d}</div></div></div>`).join('');
+  fetchAI('ai-r',`Você é terapeuta do FlorescerIA usando o Método CIS.\nResultados — Identidade(SOU):${ms.toFixed(1)}/5(${ps}%), Capacidade(FAÇO):${mf.toFixed(1)}/5(${pf}%), Merecimento(TENHO):${mt.toFixed(1)}/5(${pt}%)\nEscreva em português brasileiro: 1 frase de acolhimento + crença mais fraca e impacto na vida + 1 sugestão prática gentil + 1 encorajamento. Máximo 5 linhas. Tom: humano, caloroso.`);
+}
+
+function initChecklist(){
+  if(document.getElementById('chk-comp').innerHTML!=='')return;
+  COMP.forEach((txt,i)=>{const d=document.createElement('div');d.className='chi';d.id='c'+i;d.innerHTML=`<div class="chb">✓</div><span class="chl">${txt}</span>`;d.onclick=()=>toggleChk('c'+i);document.getElementById('chk-comp').appendChild(d);});
+  FIS.forEach((txt,i)=>{const d=document.createElement('div');d.className='chi fis';d.id='f'+i;d.innerHTML=`<div class="chb">✓</div><span class="chl">${txt}</span>`;d.onclick=()=>toggleChk('f'+i);document.getElementById('chk-fis').appendChild(d);});
+}
+function toggleChk(id){const el=document.getElementById(id);if(chkSel.has(id)){chkSel.delete(id);el.classList.remove('on');}else{chkSel.add(id);el.classList.add('on');}updateChk();}
+function updateChk(){const n=chkSel.size,total=COMP.length+FIS.length,pct=Math.round(n/total*100);document.getElementById('chk-cnt').textContent=n;document.getElementById('chk-pct').textContent=pct+'%';document.getElementById('chk-prog').style.width=pct+'%';document.getElementById('chk-btn').disabled=n===0;document.getElementById('chk-result').style.display='none';}
+function clearChecklist(){chkSel.clear();document.querySelectorAll('.chi').forEach(el=>el.classList.remove('on'));updateChk();}
+async function analyzeChecklist(){
+  const total=COMP.length+FIS.length,pct=Math.round(chkSel.size/total*100);
+  const lv=pct===0?{i:'🌟',t:'Nenhum sintoma',d:'Ótimo! Você não reconheceu sintomas neste momento.',bg:'#E1F5EE',bc:'#1D9E75'}:pct<=20?{i:'🌱',t:'Sinais leves',d:'Poucos sintomas. Autocuidado contínuo é suficiente.',bg:'#E1F5EE',bc:'#1D9E75'}:pct<=40?{i:'💛',t:'Atenção moderada',d:'Alguns padrões presentes. Vale aprofundar o autoconhecimento.',bg:'#FAEEDA',bc:'#BA7517'}:pct<=65?{i:'🟠',t:'Sinais significativos',d:'Vários sintomas. Trabalhar as crenças CIS pode trazer grandes mudanças.',bg:'#FAECE7',bc:'#D85A30'}:{i:'❤️',t:'Atenção elevada',d:'Muitos sintomas. Momento importante para buscar apoio e cuidado.',bg:'#FCEBEB',bc:'#E24B4A'};
+  const res=document.getElementById('chk-result');res.style.display='block';
+  document.getElementById('chk-level').innerHTML=`<div style="font-size:26px;flex-shrink:0">${lv.i}</div><div><div style="font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px">${lv.t}</div><div style="font-size:13px;color:var(--t2);line-height:1.5">${lv.d}</div></div>`;
+  document.getElementById('chk-level').style.background=lv.bg;document.getElementById('chk-level').style.borderColor=lv.bc;
+  document.getElementById('chk-ai').innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
+  const nomes=[...chkSel].map(id=>id.startsWith('f')?FIS[parseInt(id.slice(1))]:COMP[parseInt(id.slice(1))]);
+  fetchAI('chk-ai',`Você é terapeuta do FlorescerIA usando o Método CIS.\nSintomas marcados (${chkSel.size} de ${total}): ${nomes.join(', ')}\nRelacione com as crenças CIS. Responda em português brasileiro, tom acolhedor: 1 frase de validação + qual crença está mais afetada + 1 insight sobre o padrão + 1 encorajamento. Máximo 5 linhas.`);
+  res.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function initMAAS(){
+  const isDark=matchMedia('(prefers-color-scheme: dark)').matches;
+  const gc=isDark?'rgba(255,255,255,0.1)':'rgba(0,0,0,0.08)';
+  const lc=isDark?'rgba(255,255,255,0.65)':'rgba(0,0,0,0.55)';
+  if(maasChart){maasChart.destroy();maasChart=null;}
+  maasChart=new Chart(document.getElementById('maas-radar'),{type:'radar',data:{labels:MA.map(a=>a.n),datasets:[{data:[...maasVals],backgroundColor:isDark?'rgba(83,74,183,0.2)':'rgba(83,74,183,0.15)',borderColor:'#534AB7',borderWidth:2,pointBackgroundColor:MA.map(a=>a.c),pointBorderColor:'#fff',pointBorderWidth:1.5,pointRadius:5}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.raw+'/10'}}},scales:{r:{min:0,max:10,ticks:{stepSize:2,color:lc,backdropColor:'transparent',font:{size:10}},grid:{color:gc},angleLines:{color:gc},pointLabels:{color:lc,font:{size:10}}}}}});
+  buildMAASSliders();buildMAASPriority();updateMAASStats();
+}
+function nivMAAS(v){if(v<=3)return{l:'Muito crítico',bg:'#FCEBEB',tc:'#A32D2D'};if(v<=6)return{l:'Crítico',bg:'#FAEEDA',tc:'#633806'};if(v<=8)return{l:'Boa nota',bg:'#E1F5EE',tc:'#085041'};if(v===9)return{l:'Muito bom',bg:'#E1F5EE',tc:'#0F6E56'};return{l:'Plenitude',bg:'#EEEDFE',tc:'#3C3489'};}
+function buildMAASSliders(){const wrap=document.getElementById('maas-sliders');wrap.innerHTML='';MA.forEach((a,i)=>{const nv=nivMAAS(maasVals[i]);const d=document.createElement('div');d.className='mi';d.innerHTML=`<div class="mt"><span class="mn" style="color:${a.c}">● ${a.n}</span><span class="mv" style="color:${a.c}">${maasVals[i]}</span></div><input type="range" min="1" max="10" step="1" value="${maasVals[i]}" oninput="updateMAAS(${i},+this.value)" style="width:100%;margin-bottom:4px"><div class="mb"><div class="mf" style="width:${maasVals[i]*10}%;background:${a.c}"></div></div><div class="ml" style="color:${nv.tc}">${nv.l}</div>`;wrap.appendChild(d);});}
+function buildMAASPriority(){const sorted=[...maasVals.map((v,i)=>({v,i}))].sort((a,b)=>a.v-b.v);const wrap=document.getElementById('maas-priority');wrap.innerHTML='';sorted.slice(0,5).forEach((item,rank)=>{const a=MA[item.i],nv=nivMAAS(item.v);const d=document.createElement('div');d.className='pi';d.innerHTML=`<div class="pk" style="background:${rank<2?'#FCEBEB':rank<4?'#FAEEDA':'#E1F5EE'};color:${rank<2?'#A32D2D':rank<4?'#633806':'#085041'}">${rank+1}</div><span class="pn" style="color:${a.c}">● ${a.n}</span><span class="pv" style="color:${a.c}">${item.v}/10</span><span class="pb" style="background:${nv.bg};color:${nv.tc}">${nv.l}</span>`;wrap.appendChild(d);});}
+function updateMAASStats(){const avg=(maasVals.reduce((s,v)=>s+v,0)/maasVals.length);document.getElementById('maas-avg').textContent=avg.toFixed(1);const minI=maasVals.indexOf(Math.min(...maasVals));document.getElementById('maas-low').textContent=MA[minI].n+' ('+maasVals[minI]+')';}
+function updateMAAS(i,v){maasVals[i]=v;if(maasChart){maasChart.data.datasets[0].data=[...maasVals];maasChart.update('none');}buildMAASSliders();buildMAASPriority();updateMAASStats();}
+async function analyzeMAAS(){const aiCard=document.getElementById('maas-ai');aiCard.style.display='block';aiCard.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';const avg=(maasVals.reduce((s,v)=>s+v,0)/maasVals.length).toFixed(1);const areas=MA.map((a,i)=>`${a.n}:${maasVals[i]}`).join(', ');const sorted=[...maasVals.map((v,i)=>({v,n:MA[i].n}))].sort((a,b)=>a.v-b.v);const criticas=sorted.slice(0,3).map(x=>`${x.n}(${x.v})`).join(', ');fetchAI('maas-ai',`Você é coach do FlorescerIA usando o MAAS.\nMédia geral: ${avg}/10. Áreas: ${areas}. Mais críticas: ${criticas}.\nResponda em português brasileiro, tom motivador: panorama geral + 2-3 áreas críticas e impacto + 1 ação prática para a mais crítica + encorajamento. Máximo 6 linhas.`);}
+
+function initCaminhos(){
+  if(document.getElementById('pattern-list').innerHTML!=='')return;
+  const list=document.getElementById('pattern-list');
+  PATTERNS.forEach(p=>{
+    const btn=document.createElement('button');btn.className='pat-btn';btn.id='pat-'+p.id;
+    btn.innerHTML=`<span class="pi2">${p.icon}</span><div><div class="ptit">${p.title}</div><div class="psub">${p.sub}</div></div>`;
+    btn.onclick=()=>selectPattern(p.id);list.appendChild(btn);
+  });
+}
+function setAge(age){currentAge=age;document.getElementById('age-child').classList.toggle('on',age==='child');document.getElementById('age-teen').classList.toggle('on',age==='teen');const cp=document.querySelector('.pat-btn.active-pat');if(cp)showCaminho(cp.dataset.id);}
+function selectPattern(id){
+  document.querySelectorAll('.pat-btn').forEach(b=>{b.classList.remove('active-pat');b.style.borderColor='';b.style.background='';});
+  const p=PATTERNS.find(x=>x.id===id);const btn=document.getElementById('pat-'+id);
+  btn.classList.add('active-pat');btn.style.borderColor=p.cor;btn.style.background=p.bg;btn.dataset.id=id;
+  showCaminho(id);
+}
+function showCaminho(id){
+  const c=CONTENT[id],p=PATTERNS.find(x=>x.id===id);
+  document.getElementById('caminho-content').style.display='block';
+  document.getElementById('cam-verses').innerHTML=c.verses.map(v=>`<div class="verse-card" style="border-color:${p.cor}"><div class="vt">${v.t}</div><div class="vr" style="color:${p.cor}">${v.r}</div></div>`).join('');
+  const media=currentAge==='child'?c.mc:c.mt;
+  document.getElementById('cam-media').innerHTML=media.map(m=>`<div class="mc2"><div class="me">${m.e}</div><div class="mtit">${m.t}</div><div class="msub">${m.s}</div></div>`).join('');
+  document.getElementById('cam-exercises').innerHTML=c.ex.map(e=>`<div class="ex-item"><div class="ex-num" style="background:${p.bg};color:${p.cor}">${e.n}</div><div><div class="ex-t">${e.t}</div><div class="ex-d">${e.d}</div></div></div>`).join('');
+  document.getElementById('cam-alert').innerHTML=c.alert?`<div class="alert-box"><div class="abt">❤️ Você não está sozinho(a)</div><div class="abd">Identificamos vários sinais que merecem atenção especial. Converse com um adulto de confiança — pai, mãe, pastor ou professor. Se precisar de apoio imediato:</div><a class="cvv-btn" href="tel:188">📞 CVV — Ligue 188 (gratuito, 24h)</a></div>`:'';
+  document.getElementById('caminho-content').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+async function analyzeDiary(){
+  const txt=document.getElementById('diary-ta').value.trim();if(!txt){alert('Escreva algo primeiro 🌱');return;}
+  const res=document.getElementById('diary-result'),ai=document.getElementById('diary-ai');res.style.display='block';ai.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
+  document.getElementById('diary-btn').disabled=true;
+  await fetchAI('diary-ai',`Você analisa textos de diário para o FlorescerIA. Identifique emoções e sinais das 3 crenças CIS (Identidade/SOU, Capacidade/FAÇO, Merecimento/TENHO). Responda em português brasileiro, tom acolhedor: 1 frase de empatia + qual crença parece mais afetada + 1 encorajamento gentil. Breve e caloroso.\n\nTexto: ${txt}`);
+  document.getElementById('diary-btn').disabled=false;
+}
+
+document.getElementById('chat-in').addEventListener('keydown',e=>{if(e.key==='Enter')sendChat()});
+async function sendChat(){
+  const input=document.getElementById('chat-in');const msg=input.value.trim();if(!msg)return;
+  input.value='';appendMsg(msg,'user');chatHist.push({role:'user',content:msg});
+  const typing=document.createElement('div');typing.className='msg ai';typing.id='typing';typing.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
+  document.getElementById('chat-msgs').appendChild(typing);scrollChat();
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Você é assistente acolhedora do FlorescerIA, app evangélico baseado no Método CIS (Identidade/SOU, Capacidade/FAÇO, Merecimento/TENHO). Responda em português brasileiro, tom gentil, empático e com base em valores cristãos quando pertinente. Identifique sinais de baixa autoestima. Nunca diagnostique. Sugira profissional quando necessário. Respostas curtas (2-3 frases).',messages:chatHist})});
+    const d=await r.json();const reply=d.content?.[0]?.text||'Estou aqui com você 💚';
+    document.getElementById('typing')?.remove();appendMsg(reply,'ai');chatHist.push({role:'assistant',content:reply});
+  }catch{document.getElementById('typing')?.remove();appendMsg('Estou aqui com você 💚 Continue me contando...','ai');}
+}
+function appendMsg(t,w){const el=document.createElement('div');el.className='msg '+w;el.textContent=t;document.getElementById('chat-msgs').appendChild(el);scrollChat();}
+function scrollChat(){const s=document.getElementById('chat-scroll');setTimeout(()=>s.scrollTop=s.scrollHeight,50);}
+
+async function fetchAI(elId,prompt){
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const d=await r.json();document.getElementById(elId).textContent=d.content?.[0]?.text||'Continue nessa jornada de autoconhecimento! 🌱';
+  }catch{document.getElementById(elId).textContent='Continue nessa jornada de autoconhecimento! 🌱';}
+}
+
+
+const PROF_AREAS=['Saúde','Financeiro','Emocional','Profissional','Espiritual','Conjugal','Filhos','Social','Intelectual'];
+const PROF_ICONS={Saúde:'❤️',Financeiro:'💰',Emocional:'😊',Profissional:'💼',Espiritual:'✨',Conjugal:'💑',Filhos:'👶',Social:'👫',Intelectual:'📚'};
+const PROF_COLORS=['#1D9E75','#534AB7','#D85A30'];
+const PROF_BGS=['#E1F5EE','#EEEDFE','#FAECE7'];
+let profStep=0,profInited=false;
+const profData=[{area:'',text:''},{area:'',text:''},{area:'',text:''}];
+
+function initProfecia(){
+  if(profInited)return;
+  profInited=true;
+  const wrap=document.getElementById('prof-areas');
+  [0,1,2].forEach(i=>{
+    const d=document.createElement('div');d.className='parea';
+    d.innerHTML=`<div class="parea-top"><div class="parea-ic" style="background:${PROF_BGS[i]}" id="paic${i}">${['🏃','💜','🔥'][i]}</div><div><div class="parea-name" id="panm${i}">Área ${i+1} — escolha abaixo</div><div class="parea-sub">Área prioritária ${i+1}</div></div></div>
+    <select id="psel${i}" onchange="updateProfArea(${i})" style="width:100%;margin-bottom:8px;padding:8px 10px;border-radius:var(--rs);border:0.5px solid var(--border);font-size:13px;background:var(--card);color:var(--text);outline:none"><option value="">Selecione a área...</option>${PROF_AREAS.map(a=>`<option>${a}</option>`).join('')}</select>
+    <textarea id="pta${i}" placeholder='Escreva no presente: "Eu sou... Eu faço... Eu tenho..."' oninput="profData[${i}].text=this.value"></textarea>
+    <div class="ai-sugg" id="psugg${i}"></div>
+    <button class="btn-s" onclick="profAiSuggest(${i})" style="margin-top:8px">✨ IA sugere uma profecia</button>`;
+    wrap.appendChild(d);
+  });
+  buildProfTasks();
+  buildProfDays();
+  try{document.getElementById('pstreak').textContent=localStorage.getItem('flo_streak')||'0';}catch{}
+}
+
+function updateProfArea(i){
+  const v=document.getElementById('psel'+i).value;
+  profData[i].area=v;
+  document.getElementById('paic'+i).textContent=v?(PROF_ICONS[v]||'🌱'):['🏃','💜','🔥'][i];
+  document.getElementById('panm'+i).textContent=v?'Área '+(i+1)+' — '+v:'Área '+(i+1)+' — escolha abaixo';
+}
+
+async function profAiSuggest(i){
+  const area=document.getElementById('psel'+i).value;
+  const sugg=document.getElementById('psugg'+i);
+  if(!area){alert('Selecione a área primeiro');return;}
+  sugg.style.display='block';
+  sugg.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Você é coach do FlorescerIA, baseado no Método CIS (Identidade/SOU, Capacidade/FAÇO, Merecimento/TENHO) com base evangélica. Crie uma profecia pessoal poderosa no presente para a área solicitada. Use as 3 crenças: EU SOU (identidade), EU FAÇO (capacidade), EU TENHO (merecimento). Tom: poderoso, positivo, bíblico quando pertinente. Máximo 4 linhas. Sem introdução.',messages:[{role:'user',content:'Crie uma profecia pessoal para a área: '+area}]})});
+    const d=await r.json();
+    const txt=d.content?.[0]?.text||'Eu sou abençoado(a) nessa área. Eu faço o que é necessário com fé. Eu tenho tudo que preciso para prosperar.';
+    sugg.textContent=txt;
+    document.getElementById('pta'+i).value=txt;
+    profData[i].text=txt;
+  }catch{sugg.textContent='Eu sou abençoado(a) e próspero(a) nessa área. Eu faço o que é necessário. Eu tenho tudo para florescer.';}
+}
+
+function setProfStep(n){
+  profStep=n;
+  [0,1,2].forEach(i=>{
+    document.getElementById('pp'+i).style.display=i===n?'block':'none';
+    document.getElementById('pp'+i).classList.toggle('on',i===n);
+    document.querySelectorAll('#prof-tabs .stab')[i].classList.toggle('on',i===n);
+  });
+  if(n===1)buildProfDisplay();
+  if(n===2)buildProfDays();
+  document.getElementById('prof-scroll').scrollTop=0;
+}
+
+function buildProfDisplay(){
+  const div=document.getElementById('prof-display');
+  div.innerHTML=[0,1,2].map(i=>{
+    const area=profData[i].area||'Área '+(i+1);
+    const text=document.getElementById('pta'+i)?.value||profData[i].text||'(Ainda não escrita)';
+    return`<div class="pcrd" style="border-color:${PROF_COLORS[i]}"><div class="pcrd-area" style="color:${PROF_COLORS[i]}">${area}</div><div class="pcrd-text">${text}</div><div style="background:${PROF_BGS[i]};border-radius:var(--rs);padding:6px 10px;margin-top:8px;font-size:11px;color:${PROF_COLORS[i]}">🗣 Declare isso em voz alta, todos os dias, com emoção e fé.</div></div>`;
+  }).join('');
+}
+
+const PROF_TASKS=[
+  {n:1,bg:'#E1F5EE',tc:'#0F6E56',title:'Declare sua profecia em voz alta',desc:'Leia suas 3 profecias com emoção e convicção. A palavra falada cria imagens mentais que reprogramam suas sinapses.'},
+  {n:2,bg:'#EEEDFE',tc:'#534AB7',title:'Visualização de 3 minutos',desc:'Feche os olhos. Visualize sua vida quando as profecias se realizarem. Sinta a emoção como se já fosse real.'},
+  {n:3,bg:'#FAECE7',tc:'#D85A30',title:'Afirmação do SOU',desc:'Repita 3 vezes: "Eu sou criação de Deus, feito de modo assombroso. Eu tenho valor, capacidade e mereço tudo de bom."'},
+  {n:4,bg:'#E1F5EE',tc:'#0F6E56',title:'Perdão e novo significado',desc:'Pense em uma situação difícil do passado. Dê um novo significado: "Isso aconteceu para me fortalecer e preparar."'},
+  {n:5,bg:'#EEEDFE',tc:'#534AB7',title:'Gratidão',desc:'Escreva ou diga 3 coisas pelas quais você é grato(a) hoje. A gratidão reprograma o cérebro para o positivo.'},
+];
+
+function buildProfTasks(){
+  const wrap=document.getElementById('prof-tasks');
+  if(!wrap)return;
+  wrap.innerHTML=PROF_TASKS.map(t=>`<div class="ptask"><div class="ptask-top"><div class="ptask-num" style="background:${t.bg};color:${t.tc}">${t.n}</div><div class="ptask-title">${t.title}</div></div><div class="ptask-desc">${t.desc}</div><label class="ptask-check"><input type="checkbox" id="ptchk${t.n}" onchange="updateProfProgress()"><span>Fiz hoje ✓</span></label></div>`).join('');
+}
+
+function updateProfProgress(){
+  const done=[1,2,3,4,5].filter(i=>document.getElementById('ptchk'+i)?.checked).length;
+  document.getElementById('pdone').textContent=done+'/5';
+  document.getElementById('prof-congrats').style.display=done===5?'block':'none';
+  if(done===5){
+    try{
+      const today=new Date().getDay();
+      const days=JSON.parse(localStorage.getItem('flo_days')||'[]');
+      if(!days.includes(today)){days.push(today);localStorage.setItem('flo_days',JSON.stringify(days));}
+      const streak=(parseInt(localStorage.getItem('flo_streak')||'0'))+1;
+      localStorage.setItem('flo_streak',streak);
+      document.getElementById('pstreak').textContent=streak;
+    }catch{}
+    buildProfDays();
+  }
+}
+
+function buildProfDays(){
+  const wrap=document.getElementById('prof-days');
+  if(!wrap)return;
+  const days=['D','S','T','Q','Q','S','S'];
+  const today=new Date().getDay();
+  let done=[];
+  try{done=JSON.parse(localStorage.getItem('flo_days')||'[]');}catch{}
+  wrap.innerHTML=days.map((d,i)=>`<div class="pday${done.includes(i)?' done':''}${i===today?' today':''}">${d}</div>`).join('');
+}
+
+
+async function gerarVinculo(){
+  const link = await window.fbGerarLinkVinculo();
+  if(!link) return;
+  const box = document.getElementById('vinculo-link-box');
+  box.textContent = link;
+  box.style.display = 'block';
+  document.getElementById('btn-gerar-vinculo').textContent = '📋 Copiar link';
+  document.getElementById('btn-gerar-vinculo').onclick = () => {
+    navigator.clipboard.writeText(link).then(()=>{
+      document.getElementById('btn-gerar-vinculo').textContent = '✅ Copiado!';
+      setTimeout(()=>document.getElementById('btn-gerar-vinculo').textContent='🔗 Gerar novo link',2000);
+    });
+  };
+}
+
+// Wrapper para salvar sessões no Firebase após diagnóstico
+const _origShowResultCIS = typeof showResultCIS !== 'undefined' ? showResultCIS : null;
+function saveQuizResult(ms, mf, mt) {
+  window.fbSaveSession('cis', {
+    sou: ms, faco: mf, tenho: mt,
+    total: Math.round((ms+mf+mt)/3*10)/10,
+    data: new Date().toISOString()
+  });
+}
+
+if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
+</script>
+</body>
+</html>
