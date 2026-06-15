@@ -81,7 +81,7 @@ window.fbGerarLinkVinculo = async () => {
       foto: currentUser.photoURL
     }, {merge:true});
   } catch(e) {}
-  return 'https://venerable-cuchufli-a75e0d.netlify.app/painel.html?vincular=' + codigo + '&nome=' + encodeURIComponent(currentUser.displayName||'');
+  return 'https://ffranca1984-ieq.github.io/floresceria/painel.html?vincular=' + codigo + '&nome=' + encodeURIComponent(currentUser.displayName||'');
 };
 
 onAuthStateChanged(auth, async (user) => {
