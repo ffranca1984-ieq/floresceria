@@ -21,6 +21,8 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp, limit }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getMessaging, getToken, onMessage }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCEelyfihFeT6xXVYJNoY62sEhLkzvBiA8",
@@ -34,6 +36,56 @@ const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
 const provider = new GoogleAuthProvider();
+
+// MESSAGING
+let messaging = null;
+try { messaging = getMessaging(fbApp); } catch(e) {}
+
+const VAPID_KEY = 'BACOO3srSCZEGkjAo7kJ23GjIHwWAOFzphcSgP32ccsbV_eTJAjWIrUpbgruUWB70CU2pomJDx5bzAPFtzQi3C0';
+
+window.solicitarNotificacoes = async () => {
+  if (!messaging) { return null; }
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') return null;
+    const token = await getToken(messaging, {
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js')
+        || await navigator.serviceWorker.register('/firebase-messaging-sw.js')
+    });
+    if (token && auth.currentUser) {
+      await setDoc(doc(db, 'usuarios', auth.currentUser.uid), {
+        fcmToken: token,
+        notificacoesAtivas: true,
+        atualizadoEm: serverTimestamp()
+      }, { merge: true });
+    }
+    return token;
+  } catch(e) { console.error('FCM:', e); return null; }
+};
+
+window.desativarNotificacoes = async () => {
+  if (!auth.currentUser) return;
+  await setDoc(doc(db, 'usuarios', auth.currentUser.uid), {
+    notificacoesAtivas: false
+  }, { merge: true });
+};
+
+// Notificação em foreground
+if (messaging) {
+  onMessage(messaging, (payload) => {
+    const { title, body } = payload.notification || {};
+    if (Notification.permission === 'granted') {
+      new Notification(title || 'FlorescerIA', {
+        body: body || '',
+        icon: '/icon-192.png',
+        badge: '/icon-192.png'
+      });
+    }
+    // Mostrar toast no app
+    window.showToast && window.showToast(title, body);
+  });
+}
 
 let currentUser = null;
 
@@ -317,6 +369,13 @@ body{font-family:'Nunito Sans',sans-serif;color:var(--text)}
 .pdp-check-row .pcd{font-size:12px;color:var(--t2);line-height:1.4}
 .pdp-check-row.done .pct{text-decoration:line-through;color:var(--t3)}
 
+
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a2e25;color:#fff;padding:12px 18px;border-radius:var(--r);font-size:13px;z-index:9999;opacity:0;transition:opacity .3s ease;pointer-events:none;max-width:320px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.3)}
+.toast.show{opacity:1}
+.toast .toast-title{font-weight:500;margin-bottom:2px}
+.toast .toast-body{font-size:12px;opacity:.8}
+.notif-btn{background:none;border:none;cursor:pointer;font-size:20px;padding:2px;line-height:1}
+
 </style>
 </head>
 <body>
@@ -344,9 +403,11 @@ body{font-family:'Nunito Sans',sans-serif;color:var(--text)}
     <div class="user-bar" style="margin-left:auto">
       <img id="user-avatar" src="" alt="avatar" style="display:none" onload="this.style.display='block'">
       <span id="user-nome">Olá</span>
-      <button onclick="window.fbLogout().then(()=>window.showLoginScreen())">Sair</button>
+      <button class="notif-btn" id="notif-btn" onclick="toggleNotificacoes()" title="Notificações">🔔</button>
+      <button onclick="window.fbLogout().then(()=>window.showLoginScreen())" style="font-size:12px;color:var(--t3);background:none;border:none;cursor:pointer">Sair</button>
     </div>
   </div>
+  <div class="toast" id="toast"><div class="toast-title" id="toast-title"></div><div class="toast-body" id="toast-body"></div></div>
   <div class="scroll">
     <div id="inst-banner" class="ib" style="display:none" onclick="installPWA()">
       <div style="font-size:22px">📲</div>
@@ -1144,7 +1205,38 @@ function pdpUpdateCheck(){
   document.getElementById('pdp-completo').style.display=done===PDP_TAREFAS.length?'block':'none';
 }
 
-if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
+
+window.showToast = (title, body, duration) => {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-title').textContent = title || '';
+  document.getElementById('toast-body').textContent = body || '';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration || 3500);
+};
+
+async function toggleNotificacoes() {
+  const btn = document.getElementById('notif-btn');
+  if (Notification.permission === 'granted') {
+    await window.desativarNotificacoes();
+    btn.textContent = '🔕';
+    window.showToast('🔕 Notificações desativadas', 'Você não receberá mais alertas.');
+  } else {
+    const token = await window.solicitarNotificacoes();
+    if (token) {
+      btn.textContent = '🔔';
+      window.showToast('🔔 Notificações ativadas!', 'Você receberá alertas importantes.');
+    } else {
+      window.showToast('❌ Permissão negada', 'Ative nas configurações do navegador.');
+    }
+  }
+}
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+    navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(()=>{});
+  });
+}
 </script>
 </body>
 </html>

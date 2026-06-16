@@ -114,6 +114,12 @@ body{font-family:'Nunito Sans',sans-serif;color:var(--text)}
 .empty-state .et{font-size:15px;font-weight:500;color:var(--text);margin-bottom:6px}
 .empty-state .es{font-size:13px;line-height:1.5}
 .loading-state{text-align:center;padding:32px 20px}
+
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a2e25;color:#fff;padding:12px 18px;border-radius:var(--r);font-size:13px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;max-width:320px;text-align:center}
+.toast.show{opacity:1}
+.notif-card{background:var(--gl);border-radius:var(--rs);padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px}
+.notif-toggle{padding:8px 16px;border-radius:var(--rs);border:none;font-size:13px;font-weight:500;cursor:pointer;font-family:'Nunito Sans',sans-serif}
+
 </style>
 </head>
 <body>
@@ -259,14 +265,17 @@ body{font-family:'Nunito Sans',sans-serif;color:var(--text)}
 </div>
 
 </div>
+<div class="toast" id="toast"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query,
-  where, getDocs, orderBy, serverTimestamp, limit, getDocsFromServer }
+  where, getDocs, orderBy, serverTimestamp, limit }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getMessaging, getToken, onMessage }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCEelyfihFeT6xXVYJNoY62sEhLkzvBiA8",
@@ -280,6 +289,9 @@ const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
 const provider = new GoogleAuthProvider();
+let messaging = null;
+try { messaging = getMessaging(fbApp); } catch(e) {}
+const VAPID_KEY = 'BACOO3srSCZEGkjAo7kJ23GjIHwWAOFzphcSgP32ccsbV_eTJAjWIrUpbgruUWB70CU2pomJDx5bzAPFtzQi3C0';
 
 let currentUser = null;
 let vinculados = [];
@@ -324,12 +336,117 @@ onAuthStateChanged(auth, async (user) => {
     }
     // Carregar dados
     await carregarVinculados(user.uid);
+    // Verificar status notificações
+    try {
+      const prof = await getDoc(doc(db,'responsaveis',user.uid));
+      const d = prof.data();
+      const statusEl = document.getElementById('notif-status');
+      if (statusEl) {
+        if (d?.notificacoesAtivas) {
+          statusEl.textContent = '🔔 Notificações ativadas';
+          statusEl.style.color = 'var(--green)';
+        } else {
+          statusEl.textContent = '🔕 Notificações desativadas';
+        }
+      }
+    } catch(e) {}
   }
 });
 
 // ============ TABS ============
 const tabBtns = document.querySelectorAll('.tab');
 const panels = document.querySelectorAll('.panel');
+
+function showToast(msg, duration) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration || 3500);
+}
+
+async function ativarNotificacoesPainel() {
+  if (!messaging) return;
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { showToast('❌ Permissão negada nas configurações'); return; }
+    const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: swReg });
+    if (token && currentUser) {
+      await setDoc(doc(db,'responsaveis',currentUser.uid), {
+        fcmTokenPainel: token, notificacoesAtivas: true
+      }, {merge:true});
+      showToast('🔔 Notificações ativadas! Você receberá alertas dos vinculados.');
+      document.getElementById('notif-status').textContent = '🔔 Ativadas';
+      document.getElementById('notif-status').style.color = 'var(--green)';
+    }
+  } catch(e) { showToast('Erro ao ativar: ' + e.message); }
+}
+
+// Notificação em foreground no painel
+if (messaging) {
+  onMessage(messaging, (payload) => {
+    const { title, body } = payload.notification || {};
+    showToast('🔔 ' + (title||'Alerta') + ': ' + (body||''), 5000);
+    carregarAlertas();
+  });
+}
+
+async function enviarAlertaResponsavel(uidResp, titulo, corpo, url) {
+  try {
+    await addDoc(collection(db,'alertas'), {
+      uidResp, titulo, corpo, url: url||'https://geracaofloresce.com.br/painel.html',
+      lido: false, criadoEm: serverTimestamp()
+    });
+  } catch(e) { console.error('alerta:', e); }
+}
+
+async function carregarAlertas() {
+  if (!currentUser) return;
+  try {
+    const q = query(collection(db,'alertas'),
+      where('uidResp','==',currentUser.uid),
+      orderBy('criadoEm','desc'), limit(20));
+    const snap = await getDocs(q);
+    const alertas = snap.docs.map(d => ({id:d.id,...d.data()}));
+    renderAlertasFirestore(alertas);
+  } catch(e) {}
+}
+
+function renderAlertasFirestore(alertas) {
+  const list = document.getElementById('alertas-list');
+  if (!list) return;
+  if (alertas.length === 0) {
+    list.innerHTML = `<div class="alert-item">
+      <div class="al-icon" style="background:var(--gl)">🌱</div>
+      <div style="flex:1"><div class="al-title">Tudo tranquilo por aqui</div>
+      <div class="al-desc">Nenhum alerta registrado ainda. Quando seus vinculados fizerem sessões, os alertas aparecerão aqui.</div></div>
+    </div>`;
+    return;
+  }
+  const nivelMap = {
+    critico: {bg:'var(--rl)',bc:'var(--red)',badge:'Crítico',badgeBg:'var(--rl)',badgeTc:'var(--rd)'},
+    atencao: {bg:'var(--cl)',bc:'var(--coral)',badge:'Atenção',badgeBg:'var(--cl)',badgeTc:'var(--cd)'},
+    moderado:{bg:'var(--al)',bc:'var(--amber)',badge:'Moderado',badgeBg:'var(--al)',badgeTc:'#633806'},
+    positivo:{bg:'var(--gl)',bc:'var(--green)',badge:'Positivo',badgeBg:'var(--gl)',badgeTc:'var(--gdp)'},
+    info:    {bg:'var(--bg)',bc:'var(--border)',badge:'Info',badgeBg:'var(--pl)',badgeTc:'var(--pd)'},
+  };
+  const iconeMap = {critico:'🆘',atencao:'⚠️',moderado:'📓',positivo:'⭐',info:'🌱'};
+  list.innerHTML = alertas.map(a => {
+    const nivel = a.nivel||'info';
+    const nm = nivelMap[nivel]||nivelMap.info;
+    const ts = a.criadoEm?.toDate ? new Date(a.criadoEm.toDate()).toLocaleString('pt-BR',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'}) : 'Agora';
+    return `<div class="alert-item" style="border-color:${nm.bc};background:${nm.bg}">
+      <div class="al-icon" style="background:${nm.bg}">${iconeMap[nivel]||'🌱'}</div>
+      <div style="flex:1">
+        <div class="al-title">${a.titulo||'Alerta'}</div>
+        <div class="al-desc">${a.corpo||''}</div>
+        <div class="al-time">${ts} · ${a.nomeFilho||''}</div>
+      </div>
+      <span class="al-badge" style="background:${nm.badgeBg};color:${nm.badgeTc}">${nm.badge}</span>
+    </div>`;
+  }).join('');
+}
+
 window.setTab = (n) => {
   tabBtns.forEach((t,i) => t.classList.toggle('on', i===n));
   panels.forEach((p,i) => p.classList.toggle('on', i===n));
@@ -527,17 +644,7 @@ async function renderEvolucao(codigo, nome) {
 }
 
 // Alertas
-document.getElementById('alertas-list').innerHTML = `
-  <div class="alert-item">
-    <div class="al-icon" style="background:var(--gl)">🌱</div>
-    <div style="flex:1">
-      <div class="al-title">Bem-vindo ao painel!</div>
-      <div class="al-desc">Vincule seus filhos ou alunos para começar a receber alertas automáticos sobre a jornada deles.</div>
-      <div class="al-time">Agora</div>
-    </div>
-    <span class="al-badge" style="background:var(--gl);color:var(--gdp)">Info</span>
-  </div>
-`;
+carregarAlertas();
 
 // IA tip
 window.getAITip = async () => {
