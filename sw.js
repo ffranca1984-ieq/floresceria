@@ -1,4 +1,4 @@
-const CACHE = 'floresceria-v83';
+const CACHE = 'floresceria-v84';
 const ASSETS = ['/', '/index.html', '/painel.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -16,14 +16,11 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  const url = e.request.url;
-
-  // NUNCA interceptar chamadas externas — deixar passar direto
-  if (!url.startsWith(self.location.origin)) {
-    return; // não chama e.respondWith() — browser trata normalmente
+  // Só interceptar requisições do próprio domínio
+  // Deixar TUDO externo passar sem interferência
+  if (e.request.url.startsWith('http') && !e.request.url.startsWith(self.registration.scope)) {
+    return;
   }
-
-  // Só cachear arquivos do próprio site
   e.respondWith(
     caches.match(e.request).then(r => r || fetch(e.request))
   );

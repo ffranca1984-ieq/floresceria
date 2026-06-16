@@ -1252,12 +1252,23 @@ window.compartilharLink = compartilharLink;
 window.installPWA = installPWA;
 
 if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>{
+  window.addEventListener('load', async () => {
+    try {
+      // Desregistrar todos os service workers antigos
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for(const reg of regs) {
+        if(reg.active && reg.active.scriptURL.includes('sw.js') &&
+           !reg.active.scriptURL.includes('firebase-messaging')) {
+          await reg.unregister();
+        }
+      }
+    } catch(e) {}
+    // Registrar versão nova
     navigator.serviceWorker.register('/sw.js').catch(()=>{});
     navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(()=>{});
   });
 }
 </script>
-<div class="v-badge">v8.3</div>
+<div class="v-badge">v8.4</div>
 </body>
 </html>
