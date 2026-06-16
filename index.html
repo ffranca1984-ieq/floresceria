@@ -724,8 +724,7 @@ window._onLogout = () => {
 window._showToast = (title, body, dur) => {
   const t = document.getElementById('toast');
   if (!t) return;
-  t.textContent = (title||'') + (body ? '
-' + body : '');
+  t.textContent = (title||'') + (body ? ' ' + body : '');
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), dur||3000);
 };
