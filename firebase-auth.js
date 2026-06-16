@@ -1,4 +1,4 @@
-// FlorescerIA — Firebase config v6 Corrigido
+// FlorescerIA — Firebase config v6
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -45,31 +45,6 @@ export async function saveProfile(uid, dados) {
 export async function getProfile(uid) {
   const snap = await getDoc(doc(db, 'usuarios', uid));
   return snap.exists() ? snap.data() : null;
-}
-
-// FUNÇÃO DO CHAT DA IA CORRIGIDA (Importando de forma segura sem quebrar o Firebase)
-export async function fetchAI(mensagemUsuario) {
-  try {
-    // Importa o SDK oficial do Gemini preparado para o navegador
-    const { GoogleGenAI } = await import("https://esm.run/@google/generative-ai");
-    
-    // Inicializa a IA usando sua chave de testes
-    const ai = new GoogleGenAI({ apiKey: "AQ.Ab8RN6IibZwWWFz9LtBqKvAqhl-6Nm1hMUkVjGX0XoOQxeEFYA" });
-    
-    const systemInstruction = `Você é a FlorescerIA, uma assistente virtual empática, acolhedora e baseada nos pilares do Método CIS®. Seu objetivo é ajudar crianças e adolescentes a desenvolverem suas inteligências emocionais. Guie o usuário com dinâmicas práticas, reprogramação de crenças (Identidade, Capacidade e Merecimento), decretos e o Poder das Palavras. Nunca seja excessivamente técnica; use uma linguagem acessível, encorajadora e baseada em princípios e sabedoria prática.`;
-
-    const model = ai.getGenerativeModel({
-      model: "gemini-1.5-flash",
-      systemInstruction: systemInstruction
-    });
-
-    const resultado = await model.generateContent(mensagemUsuario);
-    return resultado.response.text();
-    
-  } catch (erro) {
-    console.error("Erro na FlorescerIA:", erro);
-    return "Estou aqui com você, mas tive um pequeno problema para processar essa resposta. Pode enviar novamente? 💚";
-  }
 }
 
 export async function saveVinculo(codigoResp, uidFilho, nomeFilho) {
