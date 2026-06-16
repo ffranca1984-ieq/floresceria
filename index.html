@@ -10,6 +10,28 @@
 <meta name="description" content="Autoestima e autoconhecimento — Método CIS">
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<script>
+// nav inline no head — disponível antes de qualquer outro script
+window.nav = function(id) {
+  if(id==='painel'){window.location.href='painel.html';return;}
+  var el = document.getElementById('s-'+id);
+  if(!el){console.warn('Tela nao encontrada:',id);return;}
+  document.querySelectorAll('.screen').forEach(function(s){s.style.display='none';s.classList.remove('active');});
+  el.style.display='flex';el.classList.add('active');
+  document.querySelectorAll('.nb').forEach(function(b,i){
+    var ids=['home','quiz','maas','palavras','chat'];
+    b.classList.toggle('active',ids[i]===id);
+  });
+  // Chamar init se necessário
+  if(id==='maas'){setTimeout(function(){window._initMAAS&&window._initMAAS();},60);}
+  if(id==='chat'){setTimeout(function(){var ci=document.getElementById('chat-in');ci&&ci.focus();},100);}
+  if(id==='checklist'){window._initChecklist&&window._initChecklist();}
+  if(id==='caminhos'){window._initCaminhos&&window._initCaminhos();}
+  if(id==='profecia'){window._initProfecia&&window._initProfecia();}
+  if(id==='palavras'){window._initPalavras&&window._initPalavras();}
+  if(id==='quiz'){window._initQuiz&&window._initQuiz();}
+};
+</script>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;700;800&family=Nunito+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -86,13 +108,16 @@ window.fbGerarLinkVinculo = async () => {
 
 onAuthStateChanged(auth, async (user) => {
   currentUser = user;
-  if(user) {
-    // Usuário logado — mostrar app
-    document.getElementById('s-login') && showAppAfterLogin(user);
-  } else {
-    // Não logado — mostrar tela de login
-    document.getElementById('s-login') && showLoginScreen();
-  }
+  const tryCallback = (attempts) => {
+    if (user) {
+      if (window._onLogin) { window._onLogin(user); }
+      else if (attempts > 0) { setTimeout(() => tryCallback(attempts - 1), 150); }
+    } else {
+      if (window._onLogout) { window._onLogout(); }
+      else if (attempts > 0) { setTimeout(() => tryCallback(attempts - 1), 150); }
+    }
+  };
+  tryCallback(30);
 });
 
 window._onLogin = (user) => {
@@ -1209,6 +1234,6 @@ window.installPWA = installPWA;
 
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
 </script>
-<div style="position:fixed;bottom:5px;right:8px;font-size:10px;color:rgba(138,171,158,0.5);z-index:1;pointer-events:none">v8.6</div>
+<div style="position:fixed;bottom:5px;right:8px;font-size:10px;color:rgba(138,171,158,0.5);z-index:1;pointer-events:none">v8.7<\/div>
 </body>
 </html>
