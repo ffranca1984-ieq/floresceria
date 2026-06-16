@@ -301,6 +301,22 @@ body{font-family:'Nunito Sans',sans-serif;color:var(--text)}
 .user-bar button{font-size:11px;color:var(--t3);background:none;border:none;cursor:pointer;font-family:'Nunito Sans',sans-serif;padding:0}
 .vinculo-box{background:var(--gl);border-radius:var(--rs);padding:12px 14px;font-size:13px;color:var(--gdp);word-break:break-all;margin-bottom:10px;display:none}
 
+
+.pdp-verse{border-radius:var(--rs);border:0.5px solid var(--border);padding:13px 15px;margin-bottom:9px;background:var(--card)}
+.pdp-verse .vt{font-size:13px;color:var(--text);line-height:1.6;font-style:italic;margin-bottom:6px}
+.pdp-verse .vr{font-size:11px;font-weight:500}
+.pdp-step{display:none}
+.pdp-step.on{display:block}
+.pdp-stab{flex:1;padding:8px 5px;border-radius:var(--rs);border:0.5px solid var(--border);background:var(--card);font-size:11px;font-weight:500;color:var(--t2);cursor:pointer;text-align:center;font-family:'Nunito Sans',sans-serif}
+.pdp-stab.on{border-color:var(--purple);background:var(--pl);color:var(--pd)}
+.pdp-area-btn{border-radius:var(--rs);border:0.5px solid var(--border);background:var(--bg);padding:10px;cursor:pointer;text-align:center;font-family:'Nunito Sans',sans-serif;font-size:12px;font-weight:500;color:var(--t2);transition:all .15s}
+.pdp-area-btn.on{border-color:var(--purple);background:var(--pl);color:var(--pd)}
+.pdp-check-row{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:var(--rs);background:var(--bg);margin-bottom:7px;cursor:pointer}
+.pdp-check-row input{width:18px;height:18px;cursor:pointer;accent-color:var(--purple);flex-shrink:0;margin-top:2px}
+.pdp-check-row .pct{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px}
+.pdp-check-row .pcd{font-size:12px;color:var(--t2);line-height:1.4}
+.pdp-check-row.done .pct{text-decoration:line-through;color:var(--t3)}
+
 </style>
 </head>
 <body>
@@ -354,6 +370,9 @@ body{font-family:'Nunito Sans',sans-serif;color:var(--text)}
       <div class="oc" onclick="nav('chat')"><div class="oi">💬</div><div class="ol">Conversar</div><div class="od">Bate-papo com IA</div></div>
     </div>
     <div class="og" style="margin-bottom:0">
+      <div class="oc" onclick="nav('palavras')" style="grid-column:span 2"><div class="oi">🗣️</div><div class="ol">O Poder das Palavras</div><div class="od">Decretos · bênção · prática diária</div></div>
+    </div>
+    <div class="og" style="margin-bottom:0">
       <div class="oc" onclick="nav('profecia')" style="grid-column:span 2"><div class="oi">🔮</div><div class="ol">Profecia + Reprogramação</div><div class="od">Reescreva sua história</div></div>
     </div>
     <div class="sl" style="margin-top:14px">Para responsáveis</div>
@@ -378,7 +397,7 @@ body{font-family:'Nunito Sans',sans-serif;color:var(--text)}
     <button class="nb active" onclick="nav('home')"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg><span>Início</span></button>
     <button class="nb" onclick="nav('quiz')"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg><span>CIS</span></button>
     <button class="nb" onclick="nav('maas')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>MAAS</span></button>
-    <button class="nb" onclick="nav('profecia')"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span>Profecia</span></button>
+    <button class="nb" onclick="nav('palavras')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><path d="M8 10h8M8 14h5"/></svg><span>Palavras</span></button>
     <button class="nb" onclick="nav('chat')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span>Chat</span></button>
   </div>
 </div>
@@ -555,6 +574,88 @@ body{font-family:'Nunito Sans',sans-serif;color:var(--text)}
   </div>
 </div>
 
+<!-- PODER DAS PALAVRAS -->
+<div id="s-palavras" class="screen" style="display:none">
+  <div class="topbar"><button class="btn-back" onclick="nav('home')"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Voltar</button><span class="topbar-title">Poder das Palavras</span></div>
+  <div class="scroll" id="pdp-scroll">
+    <div class="hero" style="background:linear-gradient(135deg,var(--purple),var(--pd))">
+      <div class="gr">🗣️ Módulo completo</div>
+      <div class="ti">O Poder das Palavras</div>
+      <div class="su">Suas palavras criam sua realidade. Aprenda a abençoar sua vida.</div>
+    </div>
+    <div style="display:flex;gap:5px;margin-bottom:14px" id="pdp-tabs">
+      <button class="pdp-stab on" onclick="setPdpStep(0)">1. Base</button>
+      <button class="pdp-stab" onclick="setPdpStep(1)">2. Reflexão</button>
+      <button class="pdp-stab" onclick="setPdpStep(2)">3. Decretos</button>
+      <button class="pdp-stab" onclick="setPdpStep(3)">4. Prática</button>
+    </div>
+    <div class="pt"><div class="pf" id="pdp-prog" style="width:25%;background:var(--purple)"></div></div>
+
+    <div id="pdp-s0" class="pdp-step on">
+      <div class="sl">Base bíblica</div>
+      <div class="pdp-verse" style="border-color:var(--purple)"><div class="vt">"A língua tem poder para trazer vida ou para trazer morte; os que gostam de usá-la comerão do seu fruto."</div><div class="vr" style="color:var(--purple)">Provérbios 18:21</div></div>
+      <div class="pdp-verse" style="border-color:var(--green)"><div class="vt">"Não saia da vossa boca nenhuma palavra torpe, e sim unicamente a que for boa para edificação, conforme a necessidade, e, assim, transmita graça aos que ouvem."</div><div class="vr" style="color:var(--green)">Efésios 4:29</div></div>
+      <div class="pdp-verse" style="border-color:var(--coral)"><div class="vt">"Não havendo profecia, o povo se corrompe."</div><div class="vr" style="color:var(--coral)">Provérbios 29:18</div></div>
+      <div class="pdp-verse" style="border-color:var(--purple)"><div class="vt">"Palavras lançadas à frente constroem uma visão."</div><div class="vr" style="color:var(--purple)">Habacuque 2:2-3</div></div>
+      <div class="card" style="background:var(--pl);border-color:var(--purple);margin-bottom:10px">
+        <div style="font-size:13px;font-weight:500;color:var(--pd);margin-bottom:5px">💡 O princípio criativo</div>
+        <div style="font-size:13px;color:var(--purple);line-height:1.6">Deus disse "Haja luz" — e houve luz. Você é criação de Deus e carrega esse poder. Toda palavra produz imediatamente uma imagem mental em quem fala e em quem ouve.</div>
+      </div>
+      <div class="card" style="background:var(--gl);border-color:var(--green);margin-bottom:10px">
+        <div style="font-size:13px;font-weight:500;color:var(--gdp);margin-bottom:5px">🧠 Ciência + fé</div>
+        <div style="font-size:13px;color:var(--gd);line-height:1.6">Somos compostos em mais de 70% por água. Masaru Emoto demonstrou que palavras e emoções alteram a estrutura molecular da água. O que suas palavras estão criando no seu corpo e vida?</div>
+      </div>
+      <button class="btn-p" style="background:var(--purple)" onclick="setPdpStep(1)">Próximo: Reflexão →</button>
+    </div>
+
+    <div id="pdp-s1" class="pdp-step" style="display:none">
+      <div class="sl">O que você está criando com suas palavras?</div>
+      <div class="card" style="background:var(--pl);border-color:var(--purple);margin-bottom:13px">
+        <div style="font-size:13px;color:var(--pd);line-height:1.6">"Não existem palavras neutras. Ou você está abençoando, ou está amaldiçoando." — Método CIS</div>
+      </div>
+      <div class="sl">Escolha uma área</div>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:13px" id="pdp-area-grid"></div>
+      <div id="pdp-ref-content" style="display:none">
+        <div id="pdp-ref-card" class="card" style="margin-bottom:11px"></div>
+        <div style="margin-bottom:11px">
+          <div style="font-size:13px;color:var(--t2);margin-bottom:5px" id="pdp-decree-label">O que você tem falado sobre essa área?</div>
+          <textarea style="width:100%;min-height:70px;border:0.5px solid var(--border);border-radius:var(--rs);padding:10px 12px;font-size:13px;color:var(--text);background:var(--card);resize:none;outline:none;line-height:1.6" id="pdp-palavras" placeholder="Escreva honestamente o que você fala sobre essa área..."></textarea>
+        </div>
+        <button class="btn-p" style="background:var(--purple)" onclick="pdpAnalisar()">✨ Analisar com IA</button>
+        <div class="ai" id="pdp-analise" style="display:none;margin-top:10px;border-color:var(--purple)"></div>
+        <button class="btn-p" style="background:var(--green);margin-top:10px" onclick="setPdpStep(2)">Próximo: Criar decretos →</button>
+      </div>
+    </div>
+
+    <div id="pdp-s2" class="pdp-step" style="display:none">
+      <div class="sl">Escreva seus decretos de bênção</div>
+      <div class="card" style="background:var(--pl);border-color:var(--purple);margin-bottom:13px">
+        <div style="font-size:13px;color:var(--pd);line-height:1.6">"Só uma pessoa extraordinária fala o contrário do que está vendo." Escreva no presente, como se já fosse realidade.</div>
+      </div>
+      <div id="pdp-decretos-areas"></div>
+      <button class="btn-p" style="background:var(--purple)" onclick="pdpGerarDecretos()">✨ IA refina meus decretos</button>
+      <div class="ai" id="pdp-decretos-result" style="display:none;margin-top:10px;border-color:var(--purple)"></div>
+      <button class="btn-p" style="background:var(--green);margin-top:10px;display:none" id="pdp-btn-prox3" onclick="setPdpStep(3)">Próximo: Prática diária →</button>
+    </div>
+
+    <div id="pdp-s3" class="pdp-step" style="display:none">
+      <div class="sl">Prática diária</div>
+      <div class="card" style="background:var(--gl);border-color:var(--green);margin-bottom:13px">
+        <div style="font-size:13px;font-weight:500;color:var(--gdp);margin-bottom:4px">🎯 Teorema do Estímulo</div>
+        <div style="font-size:13px;color:var(--gd);line-height:1.5">Declare suas palavras de bênção todos os dias com emoção. Estímulo certo + intensidade certa + tempo necessário = nova realidade.</div>
+      </div>
+      <div class="sl">Checklist diário</div>
+      <div id="pdp-checklist"></div>
+      <div id="pdp-completo" style="display:none;background:var(--pl);border-radius:var(--r);padding:14px;text-align:center;margin-top:4px">
+        <div style="font-size:24px;margin-bottom:6px">🌟</div>
+        <div style="font-size:14px;font-weight:500;color:var(--pd);margin-bottom:3px">Dia completo!</div>
+        <div style="font-size:12px;color:var(--purple);line-height:1.5">Você exerceu o poder das palavras hoje. Continue e observe sua vida mudar!</div>
+      </div>
+      <button class="btn-p" style="background:var(--purple);margin-top:14px" onclick="nav('chat')">💬 Conversar sobre minha jornada</button>
+    </div>
+  </div>
+</div>
+
 <!-- DIARY -->
 <div id="s-diary" class="screen" style="display:none">
   <div class="topbar"><button class="btn-back" onclick="nav('home')"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Voltar</button><span class="topbar-title">Diário livre</span></div>
@@ -658,7 +759,7 @@ function nav(id){
   const el=document.getElementById('s-'+id);
   el.style.display='flex';el.classList.add('active');
   document.querySelectorAll('.nb').forEach((b,i)=>{
-    const ids=['home','quiz','maas','profecia','chat'];
+    const ids=['home','quiz','maas','palavras','chat'];
     b.classList.toggle('active',ids[i]===id);
   });
   if(id==='quiz'){curQ=0;respostas=[];renderQ();}
@@ -667,6 +768,7 @@ function nav(id){
   if(id==='checklist'){initChecklist();}
   if(id==='caminhos'){initCaminhos();}
   if(id==='profecia'){initProfecia();}
+  if(id==='palavras'){initPalavras();}
 }
 
 function renderQ(){
@@ -945,6 +1047,101 @@ function saveQuizResult(ms, mf, mt) {
     total: Math.round((ms+mf+mt)/3*10)/10,
     data: new Date().toISOString()
   });
+}
+
+
+const PDP_AREAS=[
+  {n:'Saúde',ic:'❤️',neg:'Meu corpo está sempre cansado...',pos:'Minha saúde está melhorando a cada dia'},
+  {n:'Financeiro',ic:'💰',neg:'Nunca tenho dinheiro...',pos:'Minha prosperidade está crescendo'},
+  {n:'Família',ic:'👨‍👩‍👧',neg:'Minha família é complicada...',pos:'Minha família vive em harmonia'},
+  {n:'Profissional',ic:'💼',neg:'Meu trabalho não avança...',pos:'Minha carreira está florescendo'},
+  {n:'Emocional',ic:'😊',neg:'Não controlo minhas emoções...',pos:'Sou emocionalmente equilibrado(a)'},
+  {n:'Espiritual',ic:'✨',neg:'Me sinto longe de Deus...',pos:'Minha vida espiritual cresce'},
+];
+const PDP_TAREFAS=[
+  {t:'Declare seus decretos em voz alta',d:'Leia com emoção, como se já fossem realidade.'},
+  {t:'Evite palavras de morte por 24h',d:'Substitua cada palavra negativa por uma de bênção.'},
+  {t:'Abençoe 3 pessoas hoje',d:'Diga algo genuinamente positivo para 3 pessoas.'},
+  {t:'Oração de proclamação',d:'Ore proclamando o que você acredita, não o que você vê.'},
+  {t:'Gratidão em voz alta',d:'Declare 5 coisas pelo quais você é grato(a), em voz alta.'},
+];
+let pdpArea=null,pdpInited=false;
+
+function initPalavras(){
+  if(pdpInited)return;pdpInited=true;
+  const grid=document.getElementById('pdp-area-grid');
+  PDP_AREAS.forEach((a,i)=>{
+    const d=document.createElement('div');d.className='pdp-area-btn';
+    d.innerHTML=`<div style="font-size:18px;margin-bottom:4px">${a.ic}</div>${a.n}`;
+    d.onclick=()=>pdpSelectArea(i,d);grid.appendChild(d);
+  });
+  const cl=document.getElementById('pdp-checklist');
+  PDP_TAREFAS.forEach((t,i)=>{
+    const d=document.createElement('div');d.className='pdp-check-row';
+    d.innerHTML=`<input type="checkbox" id="pdc${i}" onchange="pdpUpdateCheck()"><div><div class="pct">${t.t}</div><div class="pcd">${t.d}</div></div>`;
+    cl.appendChild(d);
+  });
+  const da=document.getElementById('pdp-decretos-areas');
+  PDP_AREAS.slice(0,3).forEach((a,i)=>{
+    const d=document.createElement('div');d.style.marginBottom='11px';
+    d.innerHTML=`<div style="font-size:13px;color:var(--t2);margin-bottom:5px">${a.ic} Decreto para ${a.n}</div><textarea id="pdpdec${i}" style="width:100%;min-height:65px;border:0.5px solid var(--border);border-radius:var(--rs);padding:10px 12px;font-size:13px;color:var(--text);background:var(--card);resize:none;outline:none;line-height:1.6" placeholder='Ex: "${a.pos}."'></textarea>`;
+    da.appendChild(d);
+  });
+}
+
+function setPdpStep(n){
+  [0,1,2,3].forEach(i=>{
+    document.getElementById('pdp-s'+i).style.display=i===n?'block':'none';
+    document.getElementById('pdp-s'+i).classList.toggle('on',i===n);
+    document.querySelectorAll('#pdp-tabs .pdp-stab')[i].classList.toggle('on',i===n);
+  });
+  document.getElementById('pdp-prog').style.width=((n+1)/4*100)+'%';
+  document.getElementById('pdp-scroll').scrollTop=0;
+}
+
+function pdpSelectArea(i,el){
+  document.querySelectorAll('.pdp-area-btn').forEach(b=>{b.classList.remove('on');});
+  el.classList.add('on');pdpArea=i;
+  const a=PDP_AREAS[i];
+  document.getElementById('pdp-ref-content').style.display='block';
+  document.getElementById('pdp-ref-card').innerHTML=`<div style="display:flex;gap:10px;align-items:flex-start"><div style="font-size:20px;flex-shrink:0">${a.ic}</div><div><div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px">${a.n}</div><div style="font-size:12px;color:var(--coral);font-style:italic;margin-bottom:5px">"${a.neg}"</div><div style="font-size:12px;color:var(--green);font-style:italic">"${a.pos}."</div></div></div>`;
+  document.getElementById('pdp-ref-card').style.background='var(--pl)';
+  document.getElementById('pdp-ref-card').style.borderColor='var(--purple)';
+  document.getElementById('pdp-decree-label').textContent='O que você tem falado sobre '+a.n.toLowerCase()+'?';
+  document.getElementById('pdp-palavras').value='';
+  document.getElementById('pdp-analise').style.display='none';
+}
+
+async function pdpAnalisar(){
+  const txt=document.getElementById('pdp-palavras').value.trim();
+  if(!txt){alert('Escreva o que você tem falado primeiro.');return;}
+  const a=PDP_AREAS[pdpArea];
+  const box=document.getElementById('pdp-analise');
+  box.style.display='block';box.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Analise palavras que a pessoa tem falado sobre uma área. Identifique se são de vida (bênção) ou morte (maldição) segundo Pv 18:21. Responda em português, tom acolhedor: 1 frase de validação + avalie se as palavras abençoam ou prejudicam + sugira uma palavra de vida para substituir. Máximo 4 linhas.',messages:[{role:'user',content:`Área: ${a.n}. O que a pessoa tem falado: "${txt}"`}]})});
+    const d=await r.json();box.textContent=d.content?.[0]?.text||'Suas palavras têm poder. Escolha conscientemente palavras de vida!';
+  }catch{box.textContent='Suas palavras têm poder criativo. Escolha conscientemente palavras de vida — elas constroem sua realidade!';}
+}
+
+async function pdpGerarDecretos(){
+  const decretos=[0,1,2].map(i=>({area:PDP_AREAS[i].n,texto:document.getElementById('pdpdec'+i)?.value.trim()||''}));
+  const box=document.getElementById('pdp-decretos-result');
+  box.style.display='block';box.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Refine ou crie decretos pessoais poderosos usando EU SOU/EU FAÇO/EU TENHO. Use linguagem bíblica quando pertinente. Escreva no presente, com poder e convicção. Para cada área, 2-3 linhas. Sem introdução.',messages:[{role:'user',content:`Refine ou crie decretos para:
+${decretos.map(d=>`${d.area}: "${d.texto||'(não preenchido)'}"`).join('
+')}`}]})});
+    const d=await r.json();
+    box.textContent=d.content?.[0]?.text||'Eu sou abençoado(a). Eu faço o que Deus preparou. Eu tenho tudo para prosperar.';
+  }catch{box.textContent='Eu sou abençoado(a) e próspero(a). Eu faço tudo com excelência e fé. Eu tenho tudo que preciso para viver em abundância.';}
+  document.getElementById('pdp-btn-prox3').style.display='block';
+}
+
+function pdpUpdateCheck(){
+  const done=PDP_TAREFAS.filter((_,i)=>document.getElementById('pdc'+i)?.checked).length;
+  PDP_TAREFAS.forEach((_,i)=>{const row=document.getElementById('pdc'+i)?.closest('.pdp-check-row');if(row)row.classList.toggle('done',document.getElementById('pdc'+i).checked);});
+  document.getElementById('pdp-completo').style.display=done===PDP_TAREFAS.length?'block':'none';
 }
 
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
