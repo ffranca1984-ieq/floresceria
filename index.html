@@ -816,11 +816,8 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPro
 function installPWA(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;document.getElementById('inst-banner').style.display='none';}}
 
 function nav(id){
-  // Redirecionar para painel se necessário
-  if(id==='painel'){window.location.href='painel.html';return;}
-  const el=document.getElementById('s-'+id);
-  if(!el){console.warn('Tela não encontrada: s-'+id);return;}
   document.querySelectorAll('.screen').forEach(s=>{s.style.display='none';s.classList.remove('active')});
+  const el=document.getElementById('s-'+id);
   el.style.display='flex';el.classList.add('active');
   document.querySelectorAll('.nb').forEach((b,i)=>{
     const ids=['home','quiz','maas','palavras','chat'];
@@ -834,34 +831,6 @@ function nav(id){
   if(id==='profecia'){initProfecia();}
   if(id==='palavras'){initPalavras();}
 }
-// Expor funções globalmente (necessário pois estamos em module)
-window.nav = nav;
-window.nextQ = nextQ;
-window.gerarVinculo = gerarVinculo;
-window.compartilharLink = compartilharLink;
-window.toggleNotificacoes = toggleNotificacoes;
-window.analyzeChecklist = analyzeChecklist;
-window.clearChecklist = clearChecklist;
-window.analyzeDiary = analyzeDiary;
-window.sendChat = sendChat;
-window.analyzeMAAS = analyzeMAAS;
-window.updateMAAS = updateMAAS;
-window.initCaminhos = initCaminhos;
-window.selectPattern = selectPattern;
-window.setAge = setAge;
-window.showCaminho = showCaminho;
-window.initProfecia = initProfecia;
-window.setProfStep = setProfStep;
-window.updateProfArea = updateProfArea;
-window.profAiSuggest = profAiSuggest;
-window.updateProfProgress = updateProfProgress;
-window.initPalavras = initPalavras;
-window.setPdpStep = setPdpStep;
-window.pdpSelectArea = pdpSelectArea;
-window.pdpAnalisar = pdpAnalisar;
-window.pdpGerarDecretos = pdpGerarDecretos;
-window.pdpUpdateCheck = pdpUpdateCheck;
-window.installPWA = installPWA;
 
 function renderQ(){
   const p=PQ[curQ];
