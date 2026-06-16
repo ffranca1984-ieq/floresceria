@@ -993,7 +993,11 @@ async function sendChat(){
     const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Você é assistente acolhedora do FlorescerIA, app evangélico baseado no Método CIS (Identidade/SOU, Capacidade/FAÇO, Merecimento/TENHO). Responda em português brasileiro, tom gentil, empático e com base em valores cristãos quando pertinente. Identifique sinais de baixa autoestima. Nunca diagnostique. Sugira profissional quando necessário. Respostas curtas (2-3 frases).',messages:chatHist})});
     const d=await r.json();const reply=d.content?.[0]?.text||'Estou aqui com você 💚';
     document.getElementById('typing')?.remove();appendMsg(reply,'ai');chatHist.push({role:'assistant',content:reply});
-  }catch{document.getElementById('typing')?.remove();appendMsg('Estou aqui com você 💚 Continue me contando...','ai');}
+  }catch(err){
+    document.getElementById('typing')?.remove();
+    console.error('Chat API erro:', err);
+    appendMsg('Estou aqui com você 💚 Continue me contando...','ai');
+  }
 }
 function appendMsg(t,w){const el=document.createElement('div');el.className='msg '+w;el.textContent=t;document.getElementById('chat-msgs').appendChild(el);scrollChat();}
 function scrollChat(){const s=document.getElementById('chat-scroll');setTimeout(()=>s.scrollTop=s.scrollHeight,50);}
@@ -1001,8 +1005,12 @@ function scrollChat(){const s=document.getElementById('chat-scroll');setTimeout(
 async function fetchAI(elId,prompt){
   try{
     const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
-    const d=await r.json();document.getElementById(elId).textContent=d.content?.[0]?.text||'Continue nessa jornada de autoconhecimento! 🌱';
-  }catch{document.getElementById(elId).textContent='Continue nessa jornada de autoconhecimento! 🌱';}
+    if(!r.ok){ const txt=await r.text(); throw new Error('HTTP '+r.status+': '+txt.slice(0,100)); }
+    const d=await r.json();document.getElementById(elId).textContent=d.content?.[0]?.text||'Continue nessa jornada! 🌱';
+  }catch(err){
+    console.error('fetchAI erro:',err);
+    document.getElementById(elId).textContent='Continue nessa jornada de autoconhecimento! 🌱';
+  }
 }
 
 
