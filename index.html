@@ -19,108 +19,100 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query,
-  where, getDocs, orderBy, serverTimestamp, limit }
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp, limit }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getMessaging, getToken, onMessage }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
 
-const fbConfig = {
-  apiKey:"AIzaSyCEelyfihFeT6xXVYJNoY62sEhLkzvBiA8",
-  authDomain:"floresceria-a1631.firebaseapp.com",
-  projectId:"floresceria-a1631",
-  storageBucket:"floresceria-a1631.firebasestorage.app",
-  messagingSenderId:"572333214071",
-  appId:"1:572333214071:web:749c83bc2bc6883fb63972"
+const firebaseConfig = {
+  apiKey: "AIzaSyCEelyfihFeT6xXVYJNoY62sEhLkzvBiA8",
+  authDomain: "floresceria-a1631.firebaseapp.com",
+  projectId: "floresceria-a1631",
+  storageBucket: "floresceria-a1631.firebasestorage.app",
+  messagingSenderId: "572333214071",
+  appId: "1:572333214071:web:749c83bc2bc6883fb63972"
 };
-const fbApp = initializeApp(fbConfig);
-const auth  = getAuth(fbApp);
-const db    = getFirestore(fbApp);
-const prov  = new GoogleAuthProvider();
-const VAPID = 'BACOO3srSCZEGkjAo7kJ23GjIHwWAOFzphcSgP32ccsbV_eTJAjWIrUpbgruUWB70CU2pomJDx5bzAPFtzQi3C0';
-let msg = null;
-try { msg = getMessaging(fbApp); } catch(e) {}
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
+const provider = new GoogleAuthProvider();
 
-// ── AUTH ──────────────────────────────────────────
-window.fbLogin  = () => signInWithPopup(auth, prov).catch(e => { alert(e.message); });
-window.fbLogout = () => signOut(auth);
+let currentUser = null;
 
-// ── FIRESTORE ─────────────────────────────────────
-window.fbSaveSession = async (tipo, dados) => {
-  const u = auth.currentUser; if (!u) return;
+// Expor funções globalmente para o código inline
+window.fbLogin = async () => {
   try {
-    await addDoc(collection(db,'sessoes'), {
-      uid: u.uid, codigoUsuario: u.uid.slice(0,8).toUpperCase(),
-      tipo, dados, criadoEm: serverTimestamp()
+    const result = await signInWithPopup(auth, provider);
+    return result.user;
+  } catch(e) { console.error(e); return null; }
+};
+window.fbLogout = () => signOut(auth);
+window.fbSaveSession = async (tipo, dados) => {
+  if(!currentUser) return;
+  try {
+    await addDoc(collection(db, 'sessoes'), {
+      uid: currentUser.uid, tipo, dados, criadoEm: serverTimestamp()
     });
-  } catch(e) { console.error(e); }
+  } catch(e) { console.error('saveSession:', e); }
 };
 window.fbSaveProfile = async (dados) => {
-  const u = auth.currentUser; if (!u) return;
+  if(!currentUser) return;
   try {
-    await setDoc(doc(db,'usuarios',u.uid),
-      { ...dados, uid:u.uid, nome:u.displayName, email:u.email,
-        foto:u.photoURL, atualizadoEm:serverTimestamp() }, {merge:true});
-  } catch(e) { console.error(e); }
+    await setDoc(doc(db, 'usuarios', currentUser.uid), {
+      ...dados, uid: currentUser.uid, nome: currentUser.displayName,
+      email: currentUser.email, foto: currentUser.photoURL, atualizadoEm: serverTimestamp()
+    }, {merge:true});
+  } catch(e) { console.error('saveProfile:', e); }
+};
+window.fbGetSessions = async (tipo, max) => {
+  if(!currentUser) return [];
+  try {
+    const q = query(collection(db,'sessoes'),
+      where('uid','==',currentUser.uid), where('tipo','==',tipo),
+      orderBy('criadoEm','desc'), limit(max||10));
+    const snap = await getDocs(q);
+    return snap.docs.map(d=>({id:d.id,...d.data()}));
+  } catch(e) { return []; }
 };
 window.fbGerarLinkVinculo = async () => {
-  const u = auth.currentUser; if (!u) return null;
-  const codigo = u.uid.slice(0,8).toUpperCase();
+  if(!currentUser) return null;
+  const codigo = currentUser.uid.slice(0,8).toUpperCase();
   try {
-    await setDoc(doc(db,'usuarios',u.uid),
-      { codigoVinculo:codigo, nome:u.displayName, foto:u.photoURL }, {merge:true});
+    await setDoc(doc(db,'usuarios',currentUser.uid), {
+      codigoVinculo: codigo, nome: currentUser.displayName,
+      foto: currentUser.photoURL
+    }, {merge:true});
   } catch(e) {}
-  return 'https://geracaofloresce.com.br/painel.html?vincular='+codigo
-       + '&nome='+encodeURIComponent(u.displayName||'');
+  return 'https://geracaofloresce.com.br/painel.html?vincular=' + codigo + '&nome=' + encodeURIComponent(currentUser.displayName||'');
 };
 
-// ── PUSH NOTIFICATIONS ────────────────────────────
-window.ativarNotificacoes = async () => {
-  if (!msg) return false;
-  try {
-    const perm = await Notification.requestPermission();
-    if (perm !== 'granted') return false;
-    let swReg;
-    try {
-      swReg = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
-      if (!swReg) swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-    } catch(e) { swReg = await navigator.serviceWorker.ready; }
-    const token = await getToken(msg, { vapidKey:VAPID, serviceWorkerRegistration:swReg });
-    if (token) {
-      await window.fbSaveProfile({ fcmToken:token, notificacoesAtivas:true });
-      localStorage.setItem('flo_notif','1');
-    }
-    return !!token;
-  } catch(e) { console.error('FCM:',e); return false; }
-};
-window.desativarNotificacoes = async () => {
-  await window.fbSaveProfile({ notificacoesAtivas:false });
-  localStorage.removeItem('flo_notif');
-};
-
-// Notificação em foreground
-if (msg) {
-  onMessage(msg, payload => {
-    const t = payload.notification?.title || 'FlorescerIA';
-    const b = payload.notification?.body  || '';
-    window._showToast && window._showToast(t, b, 5000);
-  });
-}
-
-// ── AUTH STATE ────────────────────────────────────
-// Usar retry para garantir que _onLogin está carregado
-onAuthStateChanged(auth, user => {
-  const tryCallback = (attempts) => {
-    if (user) {
-      if (window._onLogin) { window._onLogin(user); }
-      else if (attempts > 0) { setTimeout(() => tryCallback(attempts-1), 100); }
-    } else {
-      if (window._onLogout) { window._onLogout(); }
-      else if (attempts > 0) { setTimeout(() => tryCallback(attempts-1), 100); }
-    }
-  };
-  tryCallback(20);
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+  if(user) {
+    // Usuário logado — mostrar app
+    document.getElementById('s-login') && showAppAfterLogin(user);
+  } else {
+    // Não logado — mostrar tela de login
+    document.getElementById('s-login') && showLoginScreen();
+  }
 });
+
+window._onLogin = (user) => {
+  document.getElementById('s-login').classList.remove('active');
+  document.getElementById('s-login').style.display = 'none';
+  document.getElementById('s-home').classList.add('active');
+  document.getElementById('s-home').style.display = 'flex';
+  const avatarEl = document.getElementById('user-avatar');
+  const nomeEl = document.getElementById('user-nome');
+  if(avatarEl && user.photoURL){avatarEl.src=user.photoURL;avatarEl.style.display='block';}
+  if(nomeEl) nomeEl.textContent = (user.displayName||'').split(' ')[0] || 'Olá';
+  window.fbSaveProfile && window.fbSaveProfile({});
+};
+window._onLogout = () => {
+  document.querySelectorAll('.screen').forEach(s=>{s.style.display='none';s.classList.remove('active')});
+  const ls = document.getElementById('s-login');
+  if(ls){ls.style.display='flex';ls.classList.add('active');}
+};
+window.showAppAfterLogin = window._onLogin;
+window.showLoginScreen = window._onLogout;
 </script>
 
 <style>
@@ -327,16 +319,6 @@ body{font-family:'Nunito Sans',sans-serif;color:var(--text)}
 
 .version-badge{position:fixed;bottom:6px;right:8px;font-size:10px;color:var(--t3);z-index:1;pointer-events:none;background:var(--bg);padding:2px 6px;border-radius:99px;opacity:.6}
 
-
-.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
-  background:#1a2e25;color:#fff;padding:11px 18px;border-radius:var(--r);
-  font-size:13px;z-index:9999;opacity:0;transition:opacity .3s;
-  pointer-events:none;max-width:300px;text-align:center;white-space:pre-line}
-.toast.show{opacity:1}
-.v-badge{position:fixed;bottom:5px;right:8px;font-size:10px;color:var(--t3);
-  z-index:1;pointer-events:none;opacity:.5}
-.notif-btn{background:none;border:none;cursor:pointer;font-size:18px;padding:2px;line-height:1;margin-left:4px}
-
 </style>
 </head>
 <body>
@@ -364,7 +346,7 @@ body{font-family:'Nunito Sans',sans-serif;color:var(--text)}
     <div class="user-bar" style="margin-left:auto">
       <img id="user-avatar" src="" alt="avatar" style="display:none" onload="this.style.display='block'">
       <span id="user-nome">Olá</span>
-      <button onclick="window.fbLogout()">Sair</button>
+      <button onclick="window.fbLogout().then(()=>window.showLoginScreen())">Sair</button>
     </div>
   </div>
   <div class="scroll">
@@ -407,13 +389,13 @@ body{font-family:'Nunito Sans',sans-serif;color:var(--text)}
       <div class="vinculo-box" id="vinculo-link-box"></div>
       <button class="btn-p" id="btn-gerar-vinculo" onclick="gerarVinculo()">🔗 Gerar link de vínculo</button>
     </div>
-    <div class="sl" style="margin-top:14px">Sobre o método</div>
+    <div style="text-align:center;padding:4px 0 8px">
+      <div style="font-size:11px;color:var(--t3)">Baseado no Método CIS® — Febracis | Paulo Vieira</div>
+    </div>
+    <div class="sl" style="margin-top:4px">Sobre o método</div>
     <div class="card" style="display:flex;gap:11px;align-items:flex-start">
       <div style="font-size:20px;flex-shrink:0">💡</div>
       <div><div style="font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px">Matriz do Valor Humano</div><div style="font-size:13px;color:var(--t2);line-height:1.5">Ninguém consegue viver sem encontrar valor em si. Você possui três fontes únicas: quem você é, o que faz e o que tem.</div></div>
-    </div>
-    <div style="text-align:center;padding:8px 0 4px">
-      <div style="font-size:11px;color:var(--t3);line-height:1.6">Baseado no Método CIS® — Febracis | Paulo Vieira</div>
     </div>
   </div>
   <div class="bnav">
@@ -707,74 +689,27 @@ body{font-family:'Nunito Sans',sans-serif;color:var(--text)}
 
 </div>
 <script>
-// ── CALLBACKS DO FIREBASE ────────────────────────
-window._onLogin = (user) => {
-  document.getElementById('s-login').classList.remove('active');
-  document.getElementById('s-login').style.display = 'none';
-  document.getElementById('s-home').classList.add('active');
-  document.getElementById('s-home').style.display = 'flex';
-  const av = document.getElementById('user-avatar');
-  const nm = document.getElementById('user-nome');
-  if (av && user.photoURL) { av.src = user.photoURL; av.style.display = 'block'; }
-  if (nm) nm.textContent = (user.displayName||'').split(' ')[0] || 'Olá';
-  window.fbSaveProfile && window.fbSaveProfile({});
-  setTimeout(async () => {
-    if (localStorage.getItem('flo_notif')) {
-      const btn = document.getElementById('notif-btn');
-      if (btn) btn.textContent = '🔔';
-    }
-  }, 500);
-};
-window._onLogout = () => {
-  document.querySelectorAll('.screen').forEach(s=>{s.style.display='none';s.classList.remove('active')});
-  const ls = document.getElementById('s-login');
-  if (ls) { ls.style.display='flex'; ls.classList.add('active'); }
-};
-window._showToast = (title, body, dur) => {
-  const t = document.getElementById('toast');
-  if (!t) return;
-  t.textContent = (title||'') + (body ? ' ' + body : '');
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), dur||3000);
-};
-async function toggleNotif() {
-  const btn = document.getElementById('notif-btn');
-  if (localStorage.getItem('flo_notif')) {
-    window.desativarNotificacoes && await window.desativarNotificacoes();
-    if (btn) btn.textContent = '🔕';
-    window._showToast('🔕 Notificações desativadas');
-  } else {
-    window._showToast('Solicitando permissão...');
-    const ok = window.ativarNotificacoes ? await window.ativarNotificacoes() : false;
-    if (ok) { if (btn) btn.textContent = '🔔'; window._showToast('🔔 Notificações ativadas!'); }
-    else { window._showToast('Permissão negada. Ative nas configurações.'); }
+const GEMINI_URL='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyAQ.Ab8RN6IibZwWWFz9LtBqKvAqhl-6Nm1hMUkVjGX0XoOQxeEFYA';
+async function geminiCall(systemPrompt,userMsg){
+  const r=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      system_instruction:{parts:[{text:systemPrompt}]},
+      contents:[{role:'user',parts:[{text:userMsg}]}],
+      generationConfig:{maxOutputTokens:1000}
+    })});
+  if(!r.ok){const t=await r.text();throw new Error('HTTP '+r.status+': '+t.slice(0,100));}
+  const d=await r.json();
+  return d.candidates?.[0]?.content?.parts?.[0]?.text||'';
+}
+async function fetchAI(elId,systemPrompt,userMsg){
+  try{
+    const text=await geminiCall(systemPrompt,userMsg);
+    document.getElementById(elId).textContent=text||'Continue nessa jornada! 🌱';
+  }catch(err){
+    console.error('fetchAI:',err);
+    document.getElementById(elId).textContent='Continue nessa jornada de autoconhecimento! 🌱';
   }
 }
-async function gerarVinculo(){
-  const link = window.fbGerarLinkVinculo ? await window.fbGerarLinkVinculo() : null;
-  if (!link) { window._showToast('Faça login primeiro'); return; }
-  const box = document.getElementById('vinculo-link-box');
-  if (box) { box.textContent = link; box.style.display = 'block'; }
-  const btn = document.getElementById('btn-gerar-vinculo');
-  if (btn) { btn.textContent = '📤 Compartilhar'; btn.onclick = () => compartilharLink(link); }
-}
-async function compartilharLink(link) {
-  const btn = document.getElementById('btn-gerar-vinculo');
-  if (navigator.share) {
-    try { await navigator.share({title:'FlorescerIA',text:'Acompanhe minha jornada 🌱',url:link}); return; }
-    catch(e) {}
-  }
-  try {
-    await navigator.clipboard.writeText(link);
-    window._showToast('Link copiado! Cole no WhatsApp.');
-    if (btn) { btn.textContent='Copiado!'; setTimeout(()=>btn.textContent='Compartilhar',2500); }
-  } catch(e) {
-    const box = document.getElementById('vinculo-link-box');
-    if (box) { const r=document.createRange(); r.selectNodeContents(box); const s=window.getSelection(); s.removeAllRanges(); s.addRange(r); }
-    window._showToast('Selecione e copie o link acima');
-  }
-}
-
 const PQ=[
   {c:'sou',t:'Identidade',cor:'#1D9E75',bg:'#E1F5EE',tc:'#085041',q:'Quando você pensa em si mesmo(a), você se vê como uma pessoa de valor?',h:'A identidade é a raiz da autoestima. Como você se define molda tudo.'},
   {c:'sou',t:'Identidade',cor:'#1D9E75',bg:'#E1F5EE',tc:'#085041',q:'Com que frequência você sente que é inferior às outras pessoas?',h:'Comparar-se constantemente é sinal de identidade fragilizada.'},
@@ -990,27 +925,29 @@ async function sendChat(){
   const typing=document.createElement('div');typing.className='msg ai';typing.id='typing';typing.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
   document.getElementById('chat-msgs').appendChild(typing);scrollChat();
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Você é assistente acolhedora do FlorescerIA, app evangélico baseado no Método CIS (Identidade/SOU, Capacidade/FAÇO, Merecimento/TENHO). Responda em português brasileiro, tom gentil, empático e com base em valores cristãos quando pertinente. Identifique sinais de baixa autoestima. Nunca diagnostique. Sugira profissional quando necessário. Respostas curtas (2-3 frases).',messages:chatHist})});
-    const d=await r.json();const reply=d.content?.[0]?.text||'Estou aqui com você 💚';
+    const geminiMsgs=chatHist.map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}));
+    const chatBody={system_instruction:{parts:[{text:'Você é assistente acolhedora do FlorescerIA, app evangélico baseado no Método CIS. Responda em português, tom gentil e cristão. Nunca diagnostique. Respostas curtas (2-3 frases).'}]},contents:geminiMsgs,generationConfig:{maxOutputTokens:500}};
+    const cr=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(chatBody)});
+    if(!cr.ok){const t=await cr.text();throw new Error('HTTP '+cr.status);}
+    const cd=await cr.json();
+    const reply=cd.candidates?.[0]?.content?.parts?.[0]?.text||'Estou aqui com você 💚';
     document.getElementById('typing')?.remove();appendMsg(reply,'ai');chatHist.push({role:'assistant',content:reply});
-  }catch(err){
-    document.getElementById('typing')?.remove();
-    console.error('Chat API erro:', err);
-    appendMsg('Estou aqui com você 💚 Continue me contando...','ai');
-  }
+  }catch{document.getElementById('typing')?.remove();appendMsg('Estou aqui com você 💚 Continue me contando...','ai');}
 }
 function appendMsg(t,w){const el=document.createElement('div');el.className='msg '+w;el.textContent=t;document.getElementById('chat-msgs').appendChild(el);scrollChat();}
 function scrollChat(){const s=document.getElementById('chat-scroll');setTimeout(()=>s.scrollTop=s.scrollHeight,50);}
 
 async function fetchAI(elId,prompt){
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
-    if(!r.ok){ const txt=await r.text(); throw new Error('HTTP '+r.status+': '+txt.slice(0,100)); }
-    const d=await r.json();document.getElementById(elId).textContent=d.content?.[0]?.text||'Continue nessa jornada! 🌱';
+    const text=await geminiCall('Você é assistente do FlorescerIA baseado no Método CIS, valores evangélicos. Responda em português brasileiro, tom acolhedor.',prompt);
+    document.getElementById(elId).textContent=text||'Continue nessa jornada! 🌱';
   }catch(err){
-    console.error('fetchAI erro:',err);
+    console.error('fetchAI:',err);
     document.getElementById(elId).textContent='Continue nessa jornada de autoconhecimento! 🌱';
   }
+},body:JSON.stringify({messages:[{role:'user',content:prompt}]})});
+    const d=await r.json();document.getElementById(elId).textContent=d.candidates?.[0]?.content?.parts?.[0]?.text||'Continue nessa jornada de autoconhecimento! 🌱';
+  }catch{document.getElementById(elId).textContent='Continue nessa jornada de autoconhecimento! 🌱';}
 }
 
 
@@ -1053,9 +990,9 @@ async function profAiSuggest(i){
   sugg.style.display='block';
   sugg.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Você é coach do FlorescerIA, baseado no Método CIS (Identidade/SOU, Capacidade/FAÇO, Merecimento/TENHO) com base evangélica. Crie uma profecia pessoal poderosa no presente para a área solicitada. Use as 3 crenças: EU SOU (identidade), EU FAÇO (capacidade), EU TENHO (merecimento). Tom: poderoso, positivo, bíblico quando pertinente. Máximo 4 linhas. Sem introdução.',messages:[{role:'user',content:'Crie uma profecia pessoal para a área: '+area}]})});
+    const r=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:'Você é coach do FlorescerIA, baseado no Método CIS (Identidade/SOU, Capacidade/FAÇO, Merecimento/TENHO) com base evangélica. Crie uma profecia pessoal poderosa no presente para a área solicitada. Use as 3 crenças: EU SOU (identidade), EU FAÇO (capacidade), EU TENHO (merecimento). Tom: poderoso, positivo, bíblico quando pertinente. Máximo 4 linhas. Sem introdução.'}]},contents:[{role:'user',parts:[{text:'Crie uma profecia pessoal para a área: '+area}]}],generationConfig:{maxOutputTokens:1000}})});
     const d=await r.json();
-    const txt=d.content?.[0]?.text||'Eu sou abençoado(a) nessa área. Eu faço o que é necessário com fé. Eu tenho tudo que preciso para prosperar.';
+    const txt=d.candidates?.[0]?.content?.parts?.[0]?.text||'Eu sou abençoado(a) nessa área. Eu faço o que é necessário com fé. Eu tenho tudo que preciso para prosperar.';
     sugg.textContent=txt;
     document.getElementById('pta'+i).value=txt;
     profData[i].text=txt;
@@ -1221,8 +1158,8 @@ async function pdpAnalisar(){
   box.style.display='block';box.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
   const prompt='Área: '+a.n+'. O que a pessoa tem falado: "'+txt+'"';
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Analise palavras que a pessoa tem falado. Identifique se são de vida (bênção) ou morte (maldição) segundo Pv 18:21. Responda em português, tom acolhedor: 1 frase de validação + avalie se abençoam ou prejudicam + sugira uma palavra de vida. Máximo 4 linhas.',messages:[{role:'user',content:prompt}]})});
-    const d=await r.json();box.textContent=d.content?.[0]?.text||'Suas palavras têm poder. Escolha palavras de vida!';
+    const r=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:'Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Analise palavras que a pessoa tem falado. Identifique se são de vida (bênção) ou morte (maldição) segundo Pv 18:21. Responda em português, tom acolhedor: 1 frase de validação + avalie se abençoam ou prejudicam + sugira uma palavra de vida. Máximo 4 linhas.'}]},contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:1000}})});
+    const d=await r.json();box.textContent=d.candidates?.[0]?.content?.parts?.[0]?.text||'Suas palavras têm poder. Escolha palavras de vida!';
   }catch{box.textContent='Suas palavras têm poder criativo. Escolha conscientemente palavras de vida!';}
 }
 
@@ -1232,9 +1169,9 @@ async function pdpGerarDecretos(){
   box.style.display='block';box.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
   const prompt='Refine ou crie decretos para: '+decretos.map(d=>d.area+': "'+( d.texto||'(não preenchido)')+'"').join(', ');
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Crie decretos pessoais usando EU SOU, EU FAÇO, EU TENHO. Use linguagem bíblica. Escreva no presente, com poder. Para cada área, 2-3 linhas. Sem introdução.',messages:[{role:'user',content:prompt}]})});
+    const r=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:'Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Crie decretos pessoais usando EU SOU, EU FAÇO, EU TENHO. Use linguagem bíblica. Escreva no presente, com poder. Para cada área, 2-3 linhas. Sem introdução.'}]},contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:1000}})});
     const d=await r.json();
-    box.textContent=d.content?.[0]?.text||'Eu sou abençoado(a). Eu faço o que Deus preparou. Eu tenho tudo para prosperar.';
+    box.textContent=d.candidates?.[0]?.content?.parts?.[0]?.text||'Eu sou abençoado(a). Eu faço o que Deus preparou. Eu tenho tudo para prosperar.';
   }catch{box.textContent='Eu sou abençoado(a) e próspero(a). Eu faço tudo com excelência e fé. Eu tenho tudo que preciso para viver em abundância.';}
   document.getElementById('pdp-btn-prox3').style.display='block';
 }
@@ -1246,29 +1183,12 @@ function pdpUpdateCheck(){
 
 // Expor nav e funções críticas globalmente
 window.nav = nav;
-window.toggleNotif = toggleNotif;
 window.gerarVinculo = gerarVinculo;
 window.compartilharLink = compartilharLink;
 window.installPWA = installPWA;
 
-if('serviceWorker' in navigator){
-  window.addEventListener('load', async () => {
-    try {
-      // Desregistrar todos os service workers antigos
-      const regs = await navigator.serviceWorker.getRegistrations();
-      for(const reg of regs) {
-        if(reg.active && reg.active.scriptURL.includes('sw.js') &&
-           !reg.active.scriptURL.includes('firebase-messaging')) {
-          await reg.unregister();
-        }
-      }
-    } catch(e) {}
-    // Registrar versão nova
-    navigator.serviceWorker.register('/sw.js').catch(()=>{});
-    navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(()=>{});
-  });
-}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
 </script>
-<div class="v-badge">v8.4</div>
+<div style="position:fixed;bottom:5px;right:8px;font-size:10px;color:rgba(138,171,158,0.5);z-index:1;pointer-events:none">v8.5</div>
 </body>
 </html>

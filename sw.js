@@ -1,4 +1,4 @@
-const CACHE = 'floresceria-v84';
+const CACHE = 'floresceria-v85';
 const ASSETS = ['/', '/index.html', '/painel.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', e => {
