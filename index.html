@@ -1091,13 +1091,41 @@ async function gerarVinculo(){
   const box = document.getElementById('vinculo-link-box');
   box.textContent = link;
   box.style.display = 'block';
-  document.getElementById('btn-gerar-vinculo').textContent = '📋 Copiar link';
-  document.getElementById('btn-gerar-vinculo').onclick = () => {
-    navigator.clipboard.writeText(link).then(()=>{
-      document.getElementById('btn-gerar-vinculo').textContent = '✅ Copiado!';
-      setTimeout(()=>document.getElementById('btn-gerar-vinculo').textContent='🔗 Gerar novo link',2000);
-    });
-  };
+  const btn = document.getElementById('btn-gerar-vinculo');
+  btn.textContent = '📤 Compartilhar link';
+  btn.onclick = () => compartilharLink(link);
+}
+
+async function compartilharLink(link) {
+  const btn = document.getElementById('btn-gerar-vinculo');
+  // Tenta Web Share API (funciona no celular como app)
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: 'FlorescerIA — Vincular responsável',
+        text: 'Toque no link para acompanhar minha jornada no FlorescerIA 🌱',
+        url: link
+      });
+      return;
+    } catch(e) {}
+  }
+  // Fallback: clipboard
+  try {
+    await navigator.clipboard.writeText(link);
+    btn.textContent = '✅ Copiado!';
+    window.showToast && window.showToast('✅ Link copiado!', 'Cole no WhatsApp para enviar ao responsável.');
+    setTimeout(() => btn.textContent = '📤 Compartilhar link', 2500);
+    return;
+  } catch(e) {}
+  // Último fallback: selecionar texto manualmente
+  const box = document.getElementById('vinculo-link-box');
+  const range = document.createRange();
+  range.selectNodeContents(box);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  btn.textContent = '✅ Selecione e copie';
+  setTimeout(() => btn.textContent = '📤 Compartilhar link', 3000);
 }
 
 // Wrapper para salvar sessões no Firebase após diagnóstico
