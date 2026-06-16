@@ -108,12 +108,18 @@ if (msg) {
 }
 
 // ── AUTH STATE ────────────────────────────────────
+// Usar retry para garantir que _onLogin está carregado
 onAuthStateChanged(auth, user => {
-  if (user) {
-    window._onLogin && window._onLogin(user);
-  } else {
-    window._onLogout && window._onLogout();
-  }
+  const tryCallback = (attempts) => {
+    if (user) {
+      if (window._onLogin) { window._onLogin(user); }
+      else if (attempts > 0) { setTimeout(() => tryCallback(attempts-1), 100); }
+    } else {
+      if (window._onLogout) { window._onLogout(); }
+      else if (attempts > 0) { setTimeout(() => tryCallback(attempts-1), 100); }
+    }
+  };
+  tryCallback(20);
 });
 </script>
 
@@ -405,6 +411,9 @@ body{font-family:'Nunito Sans',sans-serif;color:var(--text)}
     <div class="card" style="display:flex;gap:11px;align-items:flex-start">
       <div style="font-size:20px;flex-shrink:0">💡</div>
       <div><div style="font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px">Matriz do Valor Humano</div><div style="font-size:13px;color:var(--t2);line-height:1.5">Ninguém consegue viver sem encontrar valor em si. Você possui três fontes únicas: quem você é, o que faz e o que tem.</div></div>
+    </div>
+    <div style="text-align:center;padding:8px 0 4px">
+      <div style="font-size:11px;color:var(--t3);line-height:1.6">Baseado no Método CIS® — Febracis | Paulo Vieira</div>
     </div>
   </div>
   <div class="bnav">
@@ -981,7 +990,7 @@ async function sendChat(){
   const typing=document.createElement('div');typing.className='msg ai';typing.id='typing';typing.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
   document.getElementById('chat-msgs').appendChild(typing);scrollChat();
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Você é assistente acolhedora do FlorescerIA, app evangélico baseado no Método CIS (Identidade/SOU, Capacidade/FAÇO, Merecimento/TENHO). Responda em português brasileiro, tom gentil, empático e com base em valores cristãos quando pertinente. Identifique sinais de baixa autoestima. Nunca diagnostique. Sugira profissional quando necessário. Respostas curtas (2-3 frases).',messages:chatHist})});
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Você é assistente acolhedora do FlorescerIA, app evangélico baseado no Método CIS (Identidade/SOU, Capacidade/FAÇO, Merecimento/TENHO). Responda em português brasileiro, tom gentil, empático e com base em valores cristãos quando pertinente. Identifique sinais de baixa autoestima. Nunca diagnostique. Sugira profissional quando necessário. Respostas curtas (2-3 frases).',messages:chatHist})});
     const d=await r.json();const reply=d.content?.[0]?.text||'Estou aqui com você 💚';
     document.getElementById('typing')?.remove();appendMsg(reply,'ai');chatHist.push({role:'assistant',content:reply});
   }catch{document.getElementById('typing')?.remove();appendMsg('Estou aqui com você 💚 Continue me contando...','ai');}
@@ -991,7 +1000,7 @@ function scrollChat(){const s=document.getElementById('chat-scroll');setTimeout(
 
 async function fetchAI(elId,prompt){
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
     const d=await r.json();document.getElementById(elId).textContent=d.content?.[0]?.text||'Continue nessa jornada de autoconhecimento! 🌱';
   }catch{document.getElementById(elId).textContent='Continue nessa jornada de autoconhecimento! 🌱';}
 }
@@ -1036,7 +1045,7 @@ async function profAiSuggest(i){
   sugg.style.display='block';
   sugg.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Você é coach do FlorescerIA, baseado no Método CIS (Identidade/SOU, Capacidade/FAÇO, Merecimento/TENHO) com base evangélica. Crie uma profecia pessoal poderosa no presente para a área solicitada. Use as 3 crenças: EU SOU (identidade), EU FAÇO (capacidade), EU TENHO (merecimento). Tom: poderoso, positivo, bíblico quando pertinente. Máximo 4 linhas. Sem introdução.',messages:[{role:'user',content:'Crie uma profecia pessoal para a área: '+area}]})});
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Você é coach do FlorescerIA, baseado no Método CIS (Identidade/SOU, Capacidade/FAÇO, Merecimento/TENHO) com base evangélica. Crie uma profecia pessoal poderosa no presente para a área solicitada. Use as 3 crenças: EU SOU (identidade), EU FAÇO (capacidade), EU TENHO (merecimento). Tom: poderoso, positivo, bíblico quando pertinente. Máximo 4 linhas. Sem introdução.',messages:[{role:'user',content:'Crie uma profecia pessoal para a área: '+area}]})});
     const d=await r.json();
     const txt=d.content?.[0]?.text||'Eu sou abençoado(a) nessa área. Eu faço o que é necessário com fé. Eu tenho tudo que preciso para prosperar.';
     sugg.textContent=txt;
@@ -1204,7 +1213,7 @@ async function pdpAnalisar(){
   box.style.display='block';box.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
   const prompt='Área: '+a.n+'. O que a pessoa tem falado: "'+txt+'"';
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Analise palavras que a pessoa tem falado. Identifique se são de vida (bênção) ou morte (maldição) segundo Pv 18:21. Responda em português, tom acolhedor: 1 frase de validação + avalie se abençoam ou prejudicam + sugira uma palavra de vida. Máximo 4 linhas.',messages:[{role:'user',content:prompt}]})});
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Analise palavras que a pessoa tem falado. Identifique se são de vida (bênção) ou morte (maldição) segundo Pv 18:21. Responda em português, tom acolhedor: 1 frase de validação + avalie se abençoam ou prejudicam + sugira uma palavra de vida. Máximo 4 linhas.',messages:[{role:'user',content:prompt}]})});
     const d=await r.json();box.textContent=d.content?.[0]?.text||'Suas palavras têm poder. Escolha palavras de vida!';
   }catch{box.textContent='Suas palavras têm poder criativo. Escolha conscientemente palavras de vida!';}
 }
@@ -1215,7 +1224,7 @@ async function pdpGerarDecretos(){
   box.style.display='block';box.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
   const prompt='Refine ou crie decretos para: '+decretos.map(d=>d.area+': "'+( d.texto||'(não preenchido)')+'"').join(', ');
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Crie decretos pessoais usando EU SOU, EU FAÇO, EU TENHO. Use linguagem bíblica. Escreva no presente, com poder. Para cada área, 2-3 linhas. Sem introdução.',messages:[{role:'user',content:prompt}]})});
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Crie decretos pessoais usando EU SOU, EU FAÇO, EU TENHO. Use linguagem bíblica. Escreva no presente, com poder. Para cada área, 2-3 linhas. Sem introdução.',messages:[{role:'user',content:prompt}]})});
     const d=await r.json();
     box.textContent=d.content?.[0]?.text||'Eu sou abençoado(a). Eu faço o que Deus preparou. Eu tenho tudo para prosperar.';
   }catch{box.textContent='Eu sou abençoado(a) e próspero(a). Eu faço tudo com excelência e fé. Eu tenho tudo que preciso para viver em abundância.';}
@@ -1241,6 +1250,6 @@ if('serviceWorker' in navigator){
   });
 }
 </script>
-<div class="v-badge">v8.0</div>
+<div class="v-badge">v8.3</div>
 </body>
 </html>
