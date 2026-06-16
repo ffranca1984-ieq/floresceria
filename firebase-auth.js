@@ -1,9 +1,13 @@
-// FlorescerIA — Firebase config v6
+// FlorescerIA — Firebase config v6 com Integração de IA
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// IMPORTAÇÃO DA BIBLIOTECA DA IA DO FIREBASE
+import { getVertexAI, getGenerativeModel } 
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-vertexai.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCEelyfihFeT6xXVYJNoY62sEhLkzvBiA8",
@@ -18,6 +22,15 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
+
+// INICIALIZAR A INTEGRAÇÃO DA IA (VERTEX AI)
+const vertexAI = getVertexAI(app);
+
+// CONFIGURAR O MODELO E AS REGRAS DO MÉTODO CIS®
+export const modeloIA = getGenerativeModel(vertexAI, {
+  model: "gemini-1.5-flash",
+  systemInstruction: `Você é a FlorescerIA, uma assistente virtual empática, acolhedora e baseada nos pilares do Método CIS®. Seu objetivo é ajudar crianças e adolescentes a desenvolverem suas inteligências emocionais. Guie o usuário com dinâmicas práticas, reprogramação de crenças (Identidade, Capacidade e Merecimento), decretos e o Poder das Palavras. Nunca seja excessivamente técnica; use uma linguagem acessível, encorajadora e baseada em princípios e sabedoria prática.`
+});
 
 // AUTH
 export const loginGoogle = () => signInWithPopup(auth, googleProvider);
@@ -45,6 +58,17 @@ export async function saveProfile(uid, dados) {
 export async function getProfile(uid) {
   const snap = await getDoc(doc(db, 'usuarios', uid));
   return snap.exists() ? snap.data() : null;
+}
+
+// NOVA FUNÇÃO DO CHAT DA IA PARA SEU APP CONSUMIR
+export async function fetchAI(mensagemUsuario) {
+  try {
+    const resultado = await modeloIA.generateContent(mensagemUsuario);
+    return resultado.response.text();
+  } catch (erro) {
+    console.error("Erro na FlorescerIA:", erro);
+    return "Tive um probleminha para processar seu pensamento agora. Pode repetir de novo de outra forma?";
+  }
 }
 
 export async function saveVinculo(codigoResp, uidFilho, nomeFilho) {
