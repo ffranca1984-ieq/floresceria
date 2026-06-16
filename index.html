@@ -689,6 +689,26 @@ body{font-family:'Nunito Sans',sans-serif;color:var(--text)}
 
 </div>
 <script>
+// DEFINIR nav IMEDIATAMENTE para onclick funcionar
+window.nav = function(id) {
+  if(id==='painel'){window.location.href='painel.html';return;}
+  const el = document.getElementById('s-'+id);
+  if(!el){console.warn('Tela nao encontrada:',id);return;}
+  document.querySelectorAll('.screen').forEach(s=>{s.style.display='none';s.classList.remove('active')});
+  el.style.display='flex';el.classList.add('active');
+  document.querySelectorAll('.nb').forEach((b,i)=>{
+    const ids=['home','quiz','maas','palavras','chat'];
+    b.classList.toggle('active',ids[i]===id);
+  });
+  if(id==='quiz'){typeof curQ!=='undefined'&&(curQ=0,respostas=[],renderQ());}
+  if(id==='maas'){setTimeout(()=>typeof initMAAS==='function'&&initMAAS(),60);}
+  if(id==='chat'){setTimeout(()=>{const ci=document.getElementById('chat-in');ci&&ci.focus();},100);}
+  if(id==='checklist'){typeof initChecklist==='function'&&initChecklist();}
+  if(id==='caminhos'){typeof initCaminhos==='function'&&initCaminhos();}
+  if(id==='profecia'){typeof initProfecia==='function'&&initProfecia();}
+  if(id==='palavras'){typeof initPalavras==='function'&&initPalavras();}
+};
+
 const GEMINI_URL='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyAQ.Ab8RN6IibZwWWFz9LtBqKvAqhl-6Nm1hMUkVjGX0XoOQxeEFYA';
 async function geminiCall(systemPrompt,userMsg){
   const r=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json'},
@@ -1189,6 +1209,6 @@ window.installPWA = installPWA;
 
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
 </script>
-<div style="position:fixed;bottom:5px;right:8px;font-size:10px;color:rgba(138,171,158,0.5);z-index:1;pointer-events:none">v8.5</div>
+<div style="position:fixed;bottom:5px;right:8px;font-size:10px;color:rgba(138,171,158,0.5);z-index:1;pointer-events:none">v8.6</div>
 </body>
 </html>
