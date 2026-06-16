@@ -317,6 +317,9 @@ body{font-family:'Nunito Sans',sans-serif;color:var(--text)}
 .pdp-check-row .pcd{font-size:12px;color:var(--t2);line-height:1.4}
 .pdp-check-row.done .pct{text-decoration:line-through;color:var(--t3)}
 
+
+.version-badge{position:fixed;bottom:6px;right:8px;font-size:10px;color:var(--t3);z-index:1;pointer-events:none;background:var(--bg);padding:2px 6px;border-radius:99px;opacity:.6}
+
 </style>
 </head>
 <body>
@@ -755,8 +758,10 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPro
 function installPWA(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;document.getElementById('inst-banner').style.display='none';}}
 
 function nav(id){
-  document.querySelectorAll('.screen').forEach(s=>{s.style.display='none';s.classList.remove('active')});
+  if(id==='painel'){window.location.href='painel.html';return;}
   const el=document.getElementById('s-'+id);
+  if(!el){console.warn('Tela nao encontrada: s-'+id);return;}
+  document.querySelectorAll('.screen').forEach(s=>{s.style.display='none';s.classList.remove('active')});
   el.style.display='flex';el.classList.add('active');
   document.querySelectorAll('.nb').forEach((b,i)=>{
     const ids=['home','quiz','maas','palavras','chat'];
@@ -1118,31 +1123,36 @@ async function pdpAnalisar(){
   const a=PDP_AREAS[pdpArea];
   const box=document.getElementById('pdp-analise');
   box.style.display='block';box.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
+  const prompt='Área: '+a.n+'. O que a pessoa tem falado: "'+txt+'"';
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Analise palavras que a pessoa tem falado sobre uma área. Identifique se são de vida (bênção) ou morte (maldição) segundo Pv 18:21. Responda em português, tom acolhedor: 1 frase de validação + avalie se as palavras abençoam ou prejudicam + sugira uma palavra de vida para substituir. Máximo 4 linhas.',messages:[{role:'user',content:`Área: ${a.n}. O que a pessoa tem falado: "${txt}"`}]})});
-    const d=await r.json();box.textContent=d.content?.[0]?.text||'Suas palavras têm poder. Escolha conscientemente palavras de vida!';
-  }catch{box.textContent='Suas palavras têm poder criativo. Escolha conscientemente palavras de vida — elas constroem sua realidade!';}
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Analise palavras que a pessoa tem falado. Identifique se são de vida (bênção) ou morte (maldição) segundo Pv 18:21. Responda em português, tom acolhedor: 1 frase de validação + avalie se abençoam ou prejudicam + sugira uma palavra de vida. Máximo 4 linhas.',messages:[{role:'user',content:prompt}]})});
+    const d=await r.json();box.textContent=d.content?.[0]?.text||'Suas palavras têm poder. Escolha palavras de vida!';
+  }catch{box.textContent='Suas palavras têm poder criativo. Escolha conscientemente palavras de vida!';}
 }
 
 async function pdpGerarDecretos(){
   const decretos=[0,1,2].map(i=>({area:PDP_AREAS[i].n,texto:document.getElementById('pdpdec'+i)?.value.trim()||''}));
   const box=document.getElementById('pdp-decretos-result');
   box.style.display='block';box.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
+  const prompt='Refine ou crie decretos para: '+decretos.map(d=>d.area+': "'+( d.texto||'(não preenchido)')+'"').join(', ');
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Refine ou crie decretos pessoais poderosos usando EU SOU/EU FAÇO/EU TENHO. Use linguagem bíblica quando pertinente. Escreva no presente, com poder e convicção. Para cada área, 2-3 linhas. Sem introdução.',messages:[{role:'user',content:`Refine ou crie decretos para:
-${decretos.map(d=>`${d.area}: "${d.texto||'(não preenchido)'}"`).join('
-')}`}]})});
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Crie decretos pessoais usando EU SOU, EU FAÇO, EU TENHO. Use linguagem bíblica. Escreva no presente, com poder. Para cada área, 2-3 linhas. Sem introdução.',messages:[{role:'user',content:prompt}]})});
     const d=await r.json();
     box.textContent=d.content?.[0]?.text||'Eu sou abençoado(a). Eu faço o que Deus preparou. Eu tenho tudo para prosperar.';
   }catch{box.textContent='Eu sou abençoado(a) e próspero(a). Eu faço tudo com excelência e fé. Eu tenho tudo que preciso para viver em abundância.';}
   document.getElementById('pdp-btn-prox3').style.display='block';
 }
-
 function pdpUpdateCheck(){
   const done=PDP_TAREFAS.filter((_,i)=>document.getElementById('pdc'+i)?.checked).length;
   PDP_TAREFAS.forEach((_,i)=>{const row=document.getElementById('pdc'+i)?.closest('.pdp-check-row');if(row)row.classList.toggle('done',document.getElementById('pdc'+i).checked);});
   document.getElementById('pdp-completo').style.display=done===PDP_TAREFAS.length?'block':'none';
 }
+
+// Expor nav e funções críticas globalmente
+window.nav = nav;
+window.gerarVinculo = gerarVinculo;
+window.compartilharLink = compartilharLink;
+window.installPWA = installPWA;
 
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
 </script>
