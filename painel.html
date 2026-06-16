@@ -540,26 +540,32 @@ document.getElementById('alertas-list').innerHTML = `
 `;
 
 // IA tip
+// Substitua a função window.getAITip antiga no seu painel.html por esta:
 window.getAITip = async () => {
   const box = document.getElementById('ai-tip');
   box.style.display = 'block';
   box.innerHTML = '<div class="dots"><span></span><span></span><span></span></div>';
   document.getElementById('ai-tip-btn').disabled = true;
+
   try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST', headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
-      body: JSON.stringify({
-        model:'claude-sonnet-4-20250514', max_tokens:1000,
-        system:'Você é orientador familiar do FlorescerIA, baseado no Método CIS com base evangélica. Auxilia pais e educadores a agirem de forma acolhedora com seus filhos. Tom: caloroso, prático, cristão quando pertinente. Sem jargão clínico.',
-        messages:[{role:'user',content:'Como posso apoiar meu filho(a) no desenvolvimento da autoestima esta semana? Me dê 3 ações práticas e acolhedoras baseadas no Método CIS e em valores cristãos.'}]
-      })
-    });
-    const d = await r.json();
-    box.textContent = d.content?.[0]?.text || 'Converse abertamente com seu filho, ouça sem julgamentos e demonstre amor incondicional.';
+    // 1. Importa dinamicamente a função fetchAI que você acabou de subir no seu firebase-auth.js
+    const { fetchAI } = await import('./firebase-auth.js');
+
+    // 2. Cria a pergunta padrão baseada no contexto do painel
+    const pergunta = 'Como posso apoiar meu filho(a) no desenvolvimento da autoestima esta semana? Me dê 3 ações práticas e acolhedoras baseadas no Método CIS e em valores cristãos.';
+
+    // 3. Chama a inteligência do Gemini através do seu arquivo configurado
+    const respostaTexto = await fetchAI(pergunta);
+
+    // 4. Exibe o resultado na tela do painel
+    box.textContent = respostaTexto;
+
   } catch(e) {
-    box.textContent = 'Converse com seu filho de forma aberta e acolhedora. Pergunte como ele está se sentindo e demonstre que você está presente. Ore juntos se possível.';
+    console.error("Erro ao chamar o Gemini no painel:", e);
+    box.textContent = 'Converse com seu filho de forma aberta e acolhedora. Pergunte como foi o dia dele e valide suas pequenas conquistas diárias. 🌸';
+  } finally {
+    document.getElementById('ai-tip-btn').disabled = false;
   }
-  document.getElementById('ai-tip-btn').disabled = false;
 };
 </script>
 </body>
