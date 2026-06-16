@@ -978,21 +978,22 @@ function showCaminho(id){
 async function analyzeDiary(){
   const txt=document.getElementById('diary-ta').value.trim();if(!txt){alert('Escreva algo primeiro 🌱');return;}
   const res=document.getElementById('diary-result'),ai=document.getElementById('diary-ai');res.style.display='block';ai.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
-  document.getElementById('diary-btn').disabled=true;
-  await fetchAI('diary-ai',`Você analisa textos de diário para o FlorescerIA. Identifique emoções e sinais das 3 crenças CIS (Identidade/SOU, Capacidade/FAÇO, Merecimento/TENHO). Responda em português brasileiro, tom acolhedor: 1 frase de empatia + qual crença parece mais afetada + 1 encorajamento gentil. Breve e caloroso.\n\nTexto: ${txt}`);
-  document.getElementById('diary-btn').disabled=false;
-}
+try {
+    // 1. Importa a função do Gemini que colocamos no seu firebase-auth.js
+    const { fetchAI } = await import('./firebase-auth.js');
 
-document.getElementById('chat-in').addEventListener('keydown',e=>{if(e.key==='Enter')sendChat()});
-async function sendChat(){
-  const input=document.getElementById('chat-in');const msg=input.value.trim();if(!msg)return;
-  input.value='';appendMsg(msg,'user');chatHist.push({role:'user',content:msg});
-  const typing=document.createElement('div');typing.className='msg ai';typing.id='typing';typing.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
-  document.getElementById('chat-msgs').appendChild(typing);scrollChat();
-  try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Você é assistente acolhedora do FlorescerIA, app evangélico baseado no Método CIS (Identidade/SOU, Capacidade/FAÇO, Merecimento/TENHO). Responda em português brasileiro, tom gentil, empático e com base em valores cristãos quando pertinente. Identifique sinais de baixa autoestima. Nunca diagnostique. Sugira profissional quando necessário. Respostas curtas (2-3 frases).',messages:chatHist})});
-    const d=await r.json();const reply=d.content?.[0]?.text||'Estou aqui com você 💚';
-    document.getElementById('typing')?.remove();appendMsg(reply,'ai');chatHist.push({role:'assistant',content:reply});
+    // 2. Chama a inteligência do Gemini com o texto digitado pelo usuário
+    const respostaIA = await fetchAI(text);
+
+    // 3. Remove os pontinhos de carregamento e exibe a resposta real da IA
+    typingDiv.remove();
+    appendMessage(respostaIA, 'ia');
+
+  } catch (e) {
+    console.error("Erro ao chamar o Gemini no chat:", e);
+    typingDiv.remove();
+    appendMessage("Estou aqui com você, mas tive um pequeno problema para processar essa resposta. Pode enviar novamente? 💚", 'ia');
+
   }catch(err){
     document.getElementById('typing')?.remove();
     console.error('Chat API erro:', err);
