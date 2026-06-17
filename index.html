@@ -735,7 +735,7 @@ window.nav = function(id) {
 };
 
 const GEMINI_URL='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
-const GEMINI_KEY=(()=>{const p=['AQ.Ab8RN6KUuZ-6Yo','A7pdb06IBC44HgqNq','whpMDfIO2UyTecuPg0A'];return p.join('');})();
+const GEMINI_KEY=(()=>{const p=['AQ.Ab8RN6Lhrj1bnY','gnDSBf0f-0HNcL33k','lElH1y9DnaBiP-Q22oA'];return p.join('');})();
 async function geminiCall(systemPrompt,userMsg){
   const r=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json','X-goog-api-key':GEMINI_KEY},
     body:JSON.stringify({
@@ -1291,6 +1291,6 @@ window.toggleNotif = typeof toggleNotif !== 'undefined' ? toggleNotif : function
 
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
 </script>
-<div style="position:fixed;bottom:5px;right:8px;font-size:10px;color:rgba(138,171,158,0.5);z-index:1;pointer-events:none">v9.3</div>
+<div style="position:fixed;bottom:5px;right:8px;font-size:10px;color:rgba(138,171,158,0.5);z-index:1;pointer-events:none">v9.4</div>
 </body>
 </html>
