@@ -734,7 +734,7 @@ window.nav = function(id) {
   if(id==='palavras'){typeof initPalavras==='function'&&initPalavras();}
 };
 
-const GEMINI_URL='https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+const GEMINI_URL='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 const GEMINI_KEY=(()=>{const p=['AQ.Ab8RN6K6Datg','CBNqHdfz47GwbOwg','MtyJeowbnpJ2RrmEnnnAQA'];return p.join('');})();
 async function geminiCall(systemPrompt,userMsg){
   const r=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json','X-goog-api-key':GEMINI_KEY},
@@ -1269,9 +1269,10 @@ window.nav = nav;
 window.gerarVinculo = gerarVinculo;
 window.compartilharLink = compartilharLink;
 window.installPWA = installPWA;
+window.toggleNotif = typeof toggleNotif !== 'undefined' ? toggleNotif : function(){};
 
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
 </script>
-<div style="position:fixed;bottom:5px;right:8px;font-size:10px;color:rgba(138,171,158,0.5);z-index:1;pointer-events:none">v8.8</div>
+<div style="position:fixed;bottom:5px;right:8px;font-size:10px;color:rgba(138,171,158,0.5);z-index:1;pointer-events:none">v9.0</div>
 </body>
 </html>
