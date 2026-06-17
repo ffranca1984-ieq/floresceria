@@ -735,7 +735,7 @@ window.nav = function(id) {
 };
 
 const GEMINI_URL='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
-const GEMINI_KEY=(()=>{const p=['AQ.Ab8RN6K6Datg','CBNqHdfz47GwbOwg','MtyJeowbnpJ2RrmEnnnAQA'];return p.join('');})();
+const GEMINI_KEY=(()=>{const p=['AQ.Ab8RN6Inl2KUos','oTZ1ZqXW3O_habzfT','BsOaZsH-mjtH-05lBIA'];return p.join('');})();
 async function geminiCall(systemPrompt,userMsg){
   const r=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json','X-goog-api-key':GEMINI_KEY},
     body:JSON.stringify({
@@ -1265,6 +1265,24 @@ function pdpUpdateCheck(){
 }
 
 // Expor nav e funções críticas globalmente
+async function compartilharLink(link) {
+  const btn = document.getElementById('btn-gerar-vinculo');
+  if (navigator.share) {
+    try { await navigator.share({title:'FlorescerIA',text:'Acompanhe minha jornada 🌱',url:link}); return; }
+    catch(e) {}
+  }
+  try {
+    await navigator.clipboard.writeText(link);
+    window._showToast && window._showToast('Link copiado! Cole no WhatsApp.');
+    if(btn){btn.textContent='Copiado!';setTimeout(()=>btn.textContent='Compartilhar',2500);}
+  } catch(e) {
+    const box=document.getElementById('vinculo-link-box');
+    if(box){const r=document.createRange();r.selectNodeContents(box);const s=window.getSelection();s.removeAllRanges();s.addRange(r);}
+    window._showToast && window._showToast('Selecione e copie o link acima');
+  }
+}
+
+
 window.nav = nav;
 window.gerarVinculo = gerarVinculo;
 window.compartilharLink = compartilharLink;
@@ -1273,6 +1291,6 @@ window.toggleNotif = typeof toggleNotif !== 'undefined' ? toggleNotif : function
 
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
 </script>
-<div style="position:fixed;bottom:5px;right:8px;font-size:10px;color:rgba(138,171,158,0.5);z-index:1;pointer-events:none">v9.0</div>
+<div style="position:fixed;bottom:5px;right:8px;font-size:10px;color:rgba(138,171,158,0.5);z-index:1;pointer-events:none">v9.2</div>
 </body>
 </html>
