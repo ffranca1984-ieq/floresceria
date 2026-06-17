@@ -1,0 +1,807 @@
+<!--
+  ============================================================
+  MÓDULO: 7 NECESSIDADES — FlorescerIA v1.2
+  ============================================================
+  INSTRUÇÕES DE INTEGRAÇÃO:
+  
+  1. NAV — adicione o botão na lista de navegação:
+     <button class="nav-btn" onclick="nav('necessidades')">
+       <span class="nav-icon">🌱</span>
+       <span>7 Necessidades</span>
+     </button>
+  
+  2. SEÇÃO — cole o bloco <section id="necessidades"> 
+     junto das outras sections do app.
+  
+  3. CSS — cole o bloco <style> no seu <style> principal
+     (ou num <style> separado no <head>).
+  
+  4. JS — cole o bloco <script> antes do </body>.
+  ============================================================
+-->
+
+<!-- ===================== CSS ===================== -->
+<style>
+/* --- 7 Necessidades --- */
+#necessidades {
+  padding: 0 0 80px 0;
+}
+
+.nec-header {
+  background: linear-gradient(135deg, #1D9E75 0%, #158a62 100%);
+  border-radius: 20px;
+  padding: 28px 24px;
+  margin-bottom: 24px;
+  color: white;
+}
+
+.nec-header .module-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.nec-header h2 {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 8px 0;
+  color: white;
+}
+
+.nec-header p {
+  font-size: 14px;
+  opacity: 0.9;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* --- Intro card --- */
+.nec-intro-card {
+  background: #fff8f0;
+  border: 1.5px solid #f0d9b5;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #444;
+  line-height: 1.6;
+}
+
+.nec-intro-card strong {
+  color: #D85A30;
+}
+
+/* --- Progresso --- */
+.nec-progress-wrap {
+  margin-bottom: 24px;
+}
+
+.nec-progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 6px;
+}
+
+.nec-progress-bar {
+  background: #e8e8e8;
+  border-radius: 10px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.nec-progress-fill {
+  background: linear-gradient(90deg, #1D9E75, #534AB7);
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.4s ease;
+  width: 0%;
+}
+
+/* --- Card de pergunta --- */
+.nec-question-card {
+  background: white;
+  border-radius: 20px;
+  padding: 28px 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  margin-bottom: 16px;
+}
+
+.nec-question-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0f0ff;
+  color: #534AB7;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 14px;
+}
+
+.nec-question-text {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1a1a2e;
+  line-height: 1.4;
+  margin-bottom: 20px;
+}
+
+.nec-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nec-option-btn {
+  border: 2px solid #e0e0e0;
+  border-radius: 14px;
+  padding: 14px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  background: white;
+  color: #444;
+  text-align: left;
+  transition: all 0.2s;
+  font-family: 'Nunito', sans-serif;
+}
+
+.nec-option-btn:hover {
+  border-color: #534AB7;
+  background: #f5f4ff;
+  color: #534AB7;
+}
+
+.nec-option-btn.selected {
+  border-color: #534AB7;
+  background: #534AB7;
+  color: white;
+}
+
+/* --- Botão próximo --- */
+.nec-nav-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.nec-btn-next {
+  background: linear-gradient(135deg, #534AB7, #3d35a0);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  padding: 14px 28px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  transition: opacity 0.2s;
+}
+
+.nec-btn-next:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* --- Resultado --- */
+.nec-result-wrap {
+  display: none;
+}
+
+.nec-result-summary {
+  background: linear-gradient(135deg, #534AB7, #1D9E75);
+  border-radius: 20px;
+  padding: 28px 24px;
+  color: white;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.nec-result-summary h3 {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0 0 8px 0;
+}
+
+.nec-result-summary p {
+  font-size: 14px;
+  opacity: 0.9;
+  margin: 0;
+}
+
+/* --- Cards de necessidade individual --- */
+.nec-card {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+  margin-bottom: 16px;
+  border-left: 5px solid #e0e0e0;
+  transition: border-color 0.3s;
+}
+
+.nec-card.nivel-alto { border-left-color: #1D9E75; }
+.nec-card.nivel-medio { border-left-color: #f0a500; }
+.nec-card.nivel-baixo { border-left-color: #D85A30; }
+
+.nec-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.nec-card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nec-card-icon {
+  font-size: 24px;
+}
+
+.nec-card-name {
+  font-size: 17px;
+  font-weight: 800;
+  color: #1a1a2e;
+}
+
+.nec-nivel-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.nivel-alto .nec-nivel-badge { background: #e6f7f1; color: #1D9E75; }
+.nivel-medio .nec-nivel-badge { background: #fff8e1; color: #f0a500; }
+.nivel-baixo .nec-nivel-badge { background: #fdeee8; color: #D85A30; }
+
+.nec-card-desc {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+
+/* Detalhes expansíveis */
+.nec-card-details {
+  display: none;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 14px;
+  margin-top: 4px;
+}
+
+.nec-card-details.open {
+  display: block;
+}
+
+.nec-detail-section {
+  margin-bottom: 14px;
+}
+
+.nec-detail-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #534AB7;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.nec-detail-text {
+  font-size: 14px;
+  color: #444;
+  line-height: 1.6;
+}
+
+.nec-verse {
+  background: #f5f4ff;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #534AB7;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.nec-exercise {
+  background: #e6f7f1;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 14px;
+  color: #1a5c45;
+  line-height: 1.6;
+}
+
+.nec-exercise strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: #1D9E75;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.nec-toggle-btn {
+  background: none;
+  border: 1.5px solid #534AB7;
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #534AB7;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  transition: all 0.2s;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.nec-toggle-btn:hover {
+  background: #534AB7;
+  color: white;
+}
+
+/* --- Botão refazer --- */
+.nec-btn-refazer {
+  background: white;
+  border: 2px solid #1D9E75;
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1D9E75;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  width: 100%;
+  margin-top: 8px;
+  transition: all 0.2s;
+}
+
+.nec-btn-refazer:hover {
+  background: #1D9E75;
+  color: white;
+}
+
+/* --- Barra de score visual --- */
+.nec-score-bar {
+  background: #f0f0f0;
+  border-radius: 6px;
+  height: 6px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.nec-score-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.6s ease;
+}
+
+.nivel-alto .nec-score-fill { background: #1D9E75; }
+.nivel-medio .nec-score-fill { background: #f0a500; }
+.nivel-baixo .nec-score-fill { background: #D85A30; }
+
+/* --- Rodapé CIS --- */
+.nec-cis-footer {
+  text-align: center;
+  font-size: 11px;
+  color: #aaa;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+</style>
+
+<!-- ===================== HTML ===================== -->
+<section id="necessidades" class="section" style="display:none;">
+  <div class="nec-header">
+    <div class="module-tag">🌱 Diagnóstico</div>
+    <h2>7 Necessidades Emocionais</h2>
+    <p>Descubra quais necessidades estão sendo atendidas na sua vida — e o que fazer para fortalecer cada uma.</p>
+  </div>
+
+  <div class="nec-intro-card">
+    A baixa autoestima se forma quando a criança não vive experiências de <strong>Pertencimento, Importância, Conexão/Amor, Limite, Generosidade, Crescimento</strong> e <strong>Missão</strong>. Este diagnóstico identifica quais dessas necessidades precisam de mais atenção.
+  </div>
+
+  <!-- Diagnóstico -->
+  <div id="nec-diagnostico">
+    <div class="nec-progress-wrap">
+      <div class="nec-progress-label">
+        <span id="nec-progress-texto">Pergunta 1 de 14</span>
+        <span id="nec-progress-pct">0%</span>
+      </div>
+      <div class="nec-progress-bar">
+        <div class="nec-progress-fill" id="nec-progress-fill"></div>
+      </div>
+    </div>
+
+    <div class="nec-question-card" id="nec-question-card">
+      <div class="nec-question-badge" id="nec-question-badge">🏠 Pertencimento</div>
+      <div class="nec-question-text" id="nec-question-text"></div>
+      <div class="nec-options" id="nec-options"></div>
+    </div>
+
+    <div class="nec-nav-row">
+      <button class="nec-btn-next" id="nec-btn-next" disabled onclick="necProxima()">
+        Próxima →
+      </button>
+    </div>
+  </div>
+
+  <!-- Resultado -->
+  <div class="nec-result-wrap" id="nec-resultado">
+    <div class="nec-result-summary">
+      <div style="font-size:36px;margin-bottom:10px;">🌿</div>
+      <h3>Seu Diagnóstico</h3>
+      <p>Veja como cada necessidade está na sua vida agora.</p>
+    </div>
+
+    <div id="nec-cards-resultado"></div>
+
+    <button class="nec-btn-refazer" onclick="necReiniciar()">↺ Refazer diagnóstico</button>
+
+    <div class="nec-cis-footer">
+      Baseado no Método CIS® — Febracis | Paulo Vieira
+    </div>
+  </div>
+</section>
+
+<!-- ===================== JS ===================== -->
+<script>
+(function() {
+
+  // -----------------------------------------------
+  // DADOS
+  // -----------------------------------------------
+  const NEC_DADOS = [
+    {
+      id: 'pertencimento',
+      nome: 'Pertencimento',
+      emoji: '🏠',
+      cor: '#534AB7',
+      perguntas: [
+        'Você sente que faz parte de algum grupo (família, amigos, escola)?',
+        'Você se sente aceito(a) do jeito que é pelas pessoas ao seu redor?'
+      ],
+      descricao: 'Pertencer é sentir que você tem um lugar no mundo — uma família, um grupo, uma comunidade onde você é bem-vindo(a) e aceito(a) como é.',
+      explicacao_baixo: 'Quando essa necessidade não é atendida, a pessoa pode se sentir solitária, diferente dos outros, ou como se não se encaixasse em lugar nenhum. Isso pode levar ao isolamento ou à busca desesperada por aceitação.',
+      explicacao_medio: 'Você tem algum senso de pertencimento, mas ainda pode sentir solidão em algumas situações ou insegurança sobre se realmente é aceito(a).',
+      explicacao_alto: 'Você tem um bom senso de pertencimento! Sente que tem seu lugar no mundo e que é aceito(a) pelas pessoas importantes em sua vida.',
+      versiculo: '"Deus põe os solitários em famílias." — Salmos 68:6',
+      exercicio_baixo: 'Identifique 1 pessoa com quem você se sente bem. Esta semana, marque um momento com ela — pode ser uma ligação, uma mensagem ou um encontro. Dar um passo em direção ao pertencimento é um ato de coragem.',
+      exercicio_medio: 'Observe os grupos dos quais você já faz parte (família, trabalho, fé) e escolha contribuir mais ativamente em um deles esta semana. Pertencimento se fortalece com presença.',
+      exercicio_alto: 'Use seu senso de pertencimento para acolher alguém que parece sozinho(a). Você pode ser a ponte que outra pessoa precisa.'
+    },
+    {
+      id: 'importancia',
+      nome: 'Importância',
+      emoji: '⭐',
+      cor: '#D85A30',
+      perguntas: [
+        'Você sente que o que você faz ou fala importa para as pessoas?',
+        'Você acredita que é especial e valioso(a) para alguém?'
+      ],
+      descricao: 'Sentir-se importante é saber que você tem valor — que sua presença faz diferença, que sua voz é ouvida e que você importa para as pessoas ao seu redor.',
+      explicacao_baixo: 'A falta de importância cria uma ferida profunda. A pessoa pode buscar atenção de formas negativas, se tornar agressiva, exibicionista ou, ao contrário, se apagar completamente para não ser rejeitada.',
+      explicacao_medio: 'Você reconhece algum valor em si mesmo(a), mas em certas situações ainda questiona se realmente importa ou se as pessoas te valorizam de verdade.',
+      explicacao_alto: 'Você tem consciência do seu valor! Sente que importa para as pessoas e que sua presença faz diferença — isso é uma base muito sólida.',
+      versiculo: '"Porque assim Deus amou o mundo, que deu o seu Filho unigênito." — João 3:16',
+      exercicio_baixo: 'Escreva 3 coisas que você fez nos últimos 7 dias que foram boas — para você ou para alguém. Não precisa ser grande. Você importa mais do que imagina. Releia isso em voz alta.',
+      exercicio_medio: 'Peça a alguém de confiança que te diga uma coisa que você faz bem. Receba sem desqualificar. Deixe que essa percepção entre.',
+      exercicio_alto: 'Declare hoje: "Eu sou importante e minha vida tem propósito." Compartilhe essa convicção com alguém que precise ouvir.'
+    },
+    {
+      id: 'conexao',
+      nome: 'Conexão / Amor',
+      emoji: '❤️',
+      cor: '#e05c8a',
+      perguntas: [
+        'Você sente que recebe carinho e afeto das pessoas ao seu redor?',
+        'Você consegue expressar amor e receber amor sem dificuldade?'
+      ],
+      descricao: 'Conexão é a capacidade de criar e manter vínculos afetivos genuínos — de dar e receber amor, carinho e cuidado de forma saudável.',
+      explicacao_baixo: 'Sem conexão, a pessoa pode se fechar emocionalmente, ter dificuldade de confiar, se tornar excessivamente dependente ou evitar relacionamentos para não se machucar.',
+      explicacao_medio: 'Você consegue se conectar com algumas pessoas, mas pode ter dificuldade de se abrir completamente ou de receber carinho sem desconforto.',
+      explicacao_alto: 'Você tem boa capacidade de conexão! Consegue criar vínculos genuínos e se sente amado(a) e amando as pessoas ao seu redor.',
+      versiculo: '"Amemo-nos uns aos outros, porque o amor vem de Deus." — 1 João 4:7',
+      exercicio_baixo: 'Esta semana, diga "eu te amo" ou "eu me importo com você" para uma pessoa importante da sua vida. Se isso parecer difícil, comece com uma mensagem. O amor que você dá, você também aprende a receber.',
+      exercicio_medio: 'Pratique receber: quando alguém te elogiar ou oferecer ajuda, não recuse. Diga apenas "obrigado(a)" e deixe entrar.',
+      exercicio_alto: 'Fortaleça suas conexões sendo presente. Desligue o celular numa conversa importante e ouça de verdade. Presença é a forma mais profunda de amor.'
+    },
+    {
+      id: 'limite',
+      nome: 'Limite',
+      emoji: '🛡️',
+      cor: '#1D9E75',
+      perguntas: [
+        'Você consegue dizer não quando algo te incomoda ou não faz bem?',
+        'Você sente que as pessoas respeitam seus limites e espaço pessoal?'
+      ],
+      descricao: 'Limite saudável é a capacidade de dizer não, de proteger seu espaço emocional e de respeitar os limites dos outros — com amor, mas com firmeza.',
+      explicacao_baixo: 'Sem limites, a pessoa se esgota tentando agradar a todos, aceita situações que a machucam, e pode acumular ressentimento. Paradoxalmente, quem não tem limites também tende a não respeitar os dos outros.',
+      explicacao_medio: 'Você consegue estabelecer alguns limites, mas ainda sente culpa ou medo ao dizer não em certas situações.',
+      explicacao_alto: 'Você tem uma boa relação com limites! Consegue se proteger sem culpa e respeitar o espaço dos outros — isso é maturidade emocional.',
+      versiculo: '"Seja o seu sim, sim; e o seu não, não." — Mateus 5:37',
+      exercicio_baixo: 'Identifique uma situação em que você precisaria dizer não, mas sempre aceita. Pratique esta frase: "Entendo, mas não consigo desta vez." Dizer não é um ato de amor próprio.',
+      exercicio_medio: 'Na próxima vez que sentir que está indo além dos seus limites, pause e pergunte: "Estou fazendo isso por vontade genuína ou por medo?" A resposta te guiará.',
+      exercicio_alto: 'Use sua clareza de limites para ensinar pelo exemplo. Quando dizer não com gentileza, explique brevemente o motivo — isso ajuda outras pessoas a aprenderem também.'
+    },
+    {
+      id: 'generosidade',
+      nome: 'Generosidade',
+      emoji: '🎁',
+      cor: '#f0a500',
+      perguntas: [
+        'Você sente prazer genuíno em ajudar ou dar algo para alguém?',
+        'Você consegue receber ajuda ou presentes sem se sentir desconfortável?'
+      ],
+      descricao: 'Generosidade saudável é a alegria de dar sem expectativa de retorno — e também a humildade de receber com gratidão. É um ciclo que nutre quem dá e quem recebe.',
+      explicacao_baixo: 'A dificuldade com generosidade pode aparecer como avareza emocional (não consegue dar) ou como doação compulsiva (dá para ser amado). Ambas indicam uma necessidade não resolvida.',
+      explicacao_medio: 'Você consegue ser generoso(a) em algumas situações, mas pode ter dificuldade de dar sem expectativa ou de receber sem culpa.',
+      explicacao_alto: 'Você tem uma generosidade saudável! Dá com alegria e recebe com gratidão — isso cria ciclos positivos de relacionamento.',
+      versiculo: '"Há mais felicidade em dar do que em receber." — Atos 20:35',
+      exercicio_baixo: 'Faça um ato de generosidade esta semana sem contar para ninguém — pode ser pequeno. Observe como você se sente. A generosidade anônima é a mais pura.',
+      exercicio_medio: 'Da próxima vez que alguém fizer algo por você, receba com um "obrigado(a)" sincero e um elogio específico. Receber bem é também um presente.',
+      exercicio_alto: 'Pense em como pode multiplicar sua generosidade — ensinar algo que sabe, conectar pessoas, ou criar uma oportunidade para alguém. Generosidade em escala transforma vidas.'
+    },
+    {
+      id: 'crescimento',
+      nome: 'Crescimento',
+      emoji: '🌱',
+      cor: '#27ae60',
+      perguntas: [
+        'Você sente que está aprendendo e evoluindo como pessoa?',
+        'Você acredita que pode ser melhor do que é hoje?'
+      ],
+      descricao: 'Crescimento é a necessidade de evoluir — de aprender, superar desafios e se tornar cada vez mais a pessoa que você foi criado(a) para ser.',
+      explicacao_baixo: 'Sem crescimento, a pessoa estagna, pode desenvolver tédio existencial, procrastinação intensa ou resignação. O Teorema do Estímulo ensina que sem estímulo certo, não há mudança neural.',
+      explicacao_medio: 'Você reconhece a importância do crescimento, mas pode ter dificuldade de sair da zona de conforto ou de manter o foco no desenvolvimento pessoal.',
+      explicacao_alto: 'Você tem uma mentalidade de crescimento! Acredita na sua capacidade de evolução e busca ativamente se desenvolver — isso é um dos maiores presentes que você pode se dar.',
+      versiculo: '"Tudo posso naquele que me fortalece." — Filipenses 4:13',
+      exercicio_baixo: 'Escolha uma área da sua vida onde quer crescer. Comprometa-se com 10 minutos por dia, por 7 dias. Pequeno + consistente = transformação real (Teorema do Estímulo).',
+      exercicio_medio: 'Identifique um hábito que te mantém estagnado(a). Por 7 dias, substitua 15 minutos desse hábito por algo que te desenvolva. Observe o que acontece.',
+      exercicio_alto: 'Compartilhe seu aprendizado com alguém. Ensinar consolida o conhecimento e multiplica o impacto do seu crescimento.'
+    },
+    {
+      id: 'missao',
+      nome: 'Missão',
+      emoji: '🔥',
+      cor: '#c0392b',
+      perguntas: [
+        'Você sente que tem um propósito — algo que só você pode contribuir para o mundo?',
+        'Você acorda com vontade de contribuir com algo maior do que você mesmo(a)?'
+      ],
+      descricao: 'Missão é a necessidade mais elevada — sentir que sua vida tem um propósito maior, que você foi colocado(a) aqui para fazer algo único e significativo.',
+      explicacao_baixo: 'Sem senso de missão, a vida pode parecer vazia ou mecânica. A pessoa cumpre suas obrigações, mas sente que falta algo. Essa necessidade costuma se revelar ao servir os outros.',
+      explicacao_medio: 'Você tem lampejos do seu propósito, mas ainda não conectou completamente com o que é a sua missão específica nessa vida.',
+      explicacao_alto: 'Você tem clareza de propósito! Sabe para o que foi criado(a) e isso dá sentido e energia para seus dias — viva isso com tudo!',
+      versiculo: '"Porque somos feitura sua, criados em Cristo Jesus para boas obras." — Efésios 2:10',
+      exercicio_baixo: 'Responda agora: "Se eu soubesse que não poderia falhar, o que eu faria para ajudar outras pessoas?" Escreva a resposta. Está ali um fio da sua missão.',
+      exercicio_medio: 'Pense em 3 momentos da sua vida em que você se sentiu mais vivo(a) e útil. O que eles têm em comum? Esse padrão aponta sua missão.',
+      exercicio_alto: 'Escreva sua missão em uma frase. Compartilhe com alguém. Declare em voz alta. A missão que é falada começa a se tornar real.'
+    }
+  ];
+
+  const OPCOES = ['Raramente', 'Às vezes', 'Sempre'];
+  const PONTOS = { 'Raramente': 1, 'Às vezes': 2, 'Sempre': 3 };
+
+  // Estado
+  let necEstado = {
+    perguntaAtual: 0,
+    respostas: [],
+    totalPerguntas: 0,
+    perguntasList: []
+  };
+
+  function necConstruirPerguntas() {
+    let lista = [];
+    NEC_DADOS.forEach(nec => {
+      nec.perguntas.forEach(p => {
+        lista.push({ necId: nec.id, texto: p });
+      });
+    });
+    necEstado.perguntasList = lista;
+    necEstado.totalPerguntas = lista.length;
+  }
+
+  function necRenderPergunta() {
+    const p = necEstado.perguntasList[necEstado.perguntaAtual];
+    const nec = NEC_DADOS.find(n => n.id === p.necId);
+    const total = necEstado.totalPerguntas;
+    const atual = necEstado.perguntaAtual + 1;
+    const pct = Math.round((necEstado.perguntaAtual / total) * 100);
+
+    document.getElementById('nec-progress-texto').textContent = `Pergunta ${atual} de ${total}`;
+    document.getElementById('nec-progress-pct').textContent = pct + '%';
+    document.getElementById('nec-progress-fill').style.width = pct + '%';
+
+    document.getElementById('nec-question-badge').textContent = nec.emoji + ' ' + nec.nome;
+    document.getElementById('nec-question-badge').style.background = nec.cor + '20';
+    document.getElementById('nec-question-badge').style.color = nec.cor;
+    document.getElementById('nec-question-text').textContent = p.texto;
+
+    const optsEl = document.getElementById('nec-options');
+    optsEl.innerHTML = '';
+    OPCOES.forEach(op => {
+      const btn = document.createElement('button');
+      btn.className = 'nec-option-btn';
+      btn.textContent = op;
+
+      // Restaurar seleção se já respondeu
+      const jaRespondeu = necEstado.respostas[necEstado.perguntaAtual];
+      if (jaRespondeu === op) {
+        btn.classList.add('selected');
+        document.getElementById('nec-btn-next').disabled = false;
+      }
+
+      btn.onclick = function() {
+        document.querySelectorAll('.nec-option-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        necEstado.respostas[necEstado.perguntaAtual] = op;
+        document.getElementById('nec-btn-next').disabled = false;
+      };
+      optsEl.appendChild(btn);
+    });
+
+    // Atualizar botão
+    const btnNext = document.getElementById('nec-btn-next');
+    const jaRespondeu = necEstado.respostas[necEstado.perguntaAtual];
+    btnNext.disabled = !jaRespondeu;
+    btnNext.textContent = (necEstado.perguntaAtual === total - 1) ? 'Ver resultado ✓' : 'Próxima →';
+  }
+
+  window.necProxima = function() {
+    const total = necEstado.totalPerguntas;
+    if (necEstado.perguntaAtual < total - 1) {
+      necEstado.perguntaAtual++;
+      necRenderPergunta();
+    } else {
+      necMostrarResultado();
+    }
+  };
+
+  function necMostrarResultado() {
+    // Calcular scores por necessidade
+    const scores = {};
+    NEC_DADOS.forEach(n => { scores[n.id] = 0; });
+
+    necEstado.perguntasList.forEach((p, idx) => {
+      const resp = necEstado.respostas[idx];
+      if (resp) scores[p.necId] += PONTOS[resp];
+    });
+
+    // Esconder diagnóstico, mostrar resultado
+    document.getElementById('nec-diagnostico').style.display = 'none';
+    const resultEl = document.getElementById('nec-resultado');
+    resultEl.style.display = 'block';
+
+    const cardsEl = document.getElementById('nec-cards-resultado');
+    cardsEl.innerHTML = '';
+
+    NEC_DADOS.forEach(nec => {
+      const score = scores[nec.id]; // 2–6
+      let nivel, nivelLabel, explicacao, exercicio;
+
+      if (score <= 2) {
+        nivel = 'nivel-baixo'; nivelLabel = 'Atenção necessária';
+        explicacao = nec.explicacao_baixo; exercicio = nec.exercicio_baixo;
+      } else if (score <= 4) {
+        nivel = 'nivel-medio'; nivelLabel = 'Em desenvolvimento';
+        explicacao = nec.explicacao_medio; exercicio = nec.exercicio_medio;
+      } else {
+        nivel = 'nivel-alto'; nivelLabel = 'Bem atendida';
+        explicacao = nec.explicacao_alto; exercicio = nec.exercicio_alto;
+      }
+
+      const pctScore = Math.round(((score - 2) / 4) * 100);
+
+      const card = document.createElement('div');
+      card.className = `nec-card ${nivel}`;
+      card.innerHTML = `
+        <div class="nec-card-header">
+          <div class="nec-card-title">
+            <span class="nec-card-icon">${nec.emoji}</span>
+            <span class="nec-card-name">${nec.nome}</span>
+          </div>
+          <span class="nec-nivel-badge">${nivelLabel}</span>
+        </div>
+        <div class="nec-card-desc">${nec.descricao}</div>
+        <div class="nec-score-bar">
+          <div class="nec-score-fill" style="width:${pctScore}%"></div>
+        </div>
+        <div class="nec-card-details" id="nec-detail-${nec.id}">
+          <div class="nec-detail-section" style="margin-top:14px;">
+            <div class="nec-detail-title">O que isso significa</div>
+            <div class="nec-detail-text">${explicacao}</div>
+          </div>
+          <div class="nec-detail-section">
+            <div class="nec-verse">${nec.versiculo}</div>
+          </div>
+          <div class="nec-detail-section">
+            <div class="nec-exercise">
+              <strong>💪 Exercício para esta semana</strong>
+              ${exercicio}
+            </div>
+          </div>
+        </div>
+        <button class="nec-toggle-btn" id="nec-toggle-${nec.id}" onclick="necToggle('${nec.id}')">
+          Ver explicação e exercício ↓
+        </button>
+      `;
+      cardsEl.appendChild(card);
+    });
+
+    // Scroll para o topo da seção resultado
+    resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  window.necToggle = function(id) {
+    const details = document.getElementById('nec-detail-' + id);
+    const btn = document.getElementById('nec-toggle-' + id);
+    const open = details.classList.toggle('open');
+    btn.textContent = open ? 'Fechar ↑' : 'Ver explicação e exercício ↓';
+  };
+
+  window.necReiniciar = function() {
+    necEstado.perguntaAtual = 0;
+    necEstado.respostas = [];
+    document.getElementById('nec-diagnostico').style.display = 'block';
+    document.getElementById('nec-resultado').style.display = 'none';
+    document.getElementById('nec-btn-next').disabled = true;
+    necRenderPergunta();
+  };
+
+  // Init quando a seção for aberta
+  // Chame necInit() quando nav('necessidades') for chamado
+  window.necInit = function() {
+    if (necEstado.perguntasList.length === 0) {
+      necConstruirPerguntas();
+      necRenderPergunta();
+    }
+  };
+
+  // -----------------------------------------------
+  // HOOK NA FUNÇÃO nav() EXISTENTE
+  // Adicione dentro do seu nav() existente:
+  //   if (section === 'necessidades') necInit();
+  // -----------------------------------------------
+
+})();
+</script>
+
+<!--
+  =====================================================
+  ADICIONAR NA FUNÇÃO nav() EXISTENTE:
+  =====================================================
+  
+  Dentro da sua função nav(section) já existente,
+  adicione esta linha junto das outras verificações:
+  
+    if (section === 'necessidades') necInit();
+  
+  =====================================================
+  ADICIONAR NO MENU DE NAVEGAÇÃO:
+  =====================================================
+  
+  <button class="nav-btn" onclick="nav('necessidades')">
+    <span class="nav-icon">🌱</span>
+    <span>7 Necessidades</span>
+  </button>
+  
+  =====================================================
+-->

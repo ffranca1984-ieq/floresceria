@@ -546,9 +546,19 @@ window.getAITip = async () => {
   box.innerHTML = '<div class="dots"><span></span><span></span><span></span></div>';
   document.getElementById('ai-tip-btn').disabled = true;
   try {
-    const gr = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyAQ.Ab8RN6IibZwWWFz9LtBqKvAqhl-6Nm1hMUkVjGX0XoOQxeEFYA',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:'Você é orientador familiar do FlorescerIA, baseado no Método CIS com base evangélica. Auxilia pais e educadores a agirem de forma acolhedora com seus filhos. Tom: caloroso, prático, cristão quando pertinente. Sem jargão clínico.'}]},contents:[{role:'user',parts:[{text:'Como posso apoiar meu filho(a) no desenvolvimento da autoestima esta semana? Me dê 3 ações práticas e acolhedoras baseadas no Método CIS e em valores cristãos.'}]}],generationConfig:{maxOutputTokens:1000}})});
-    const gd = await gr.json();
-    box.textContent = gd.candidates?.[0]?.content?.parts?.[0]?.text || 'Converse abertamente com seu filho, ouça sem julgamentos e demonstre amor incondicional.';
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        system: "Você é orientador familiar do FlorescerIA, baseado no Método CIS de Paulo Vieira/Febracis, com base evangélica. Auxilia pais e educadores a agirem de forma acolhedora com seus filhos. Tom: caloroso, prático, cristão quando pertinente. Responda sempre em português brasileiro.",
+        messages: [{role:"user", content:"Como posso apoiar meu filho(a) no desenvolvimento da autoestima esta semana? Me dê 3 ações práticas e acolhedoras baseadas no Método CIS e em valores cristãos."}]
+      })
+    });
+    const data = await response.json();
+    const text = data.content?.map(i => i.text || "").join("") || "";
+    box.textContent = text || 'Converse abertamente com seu filho, ouça sem julgamentos e demonstre amor incondicional.';
   } catch(e) {
     box.textContent = 'Converse com seu filho de forma aberta e acolhedora. Pergunte como ele está se sentindo e demonstre que você está presente. Ore juntos se possível.';
   }
