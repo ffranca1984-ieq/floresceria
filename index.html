@@ -19,7 +19,7 @@ window.nav = function(id) {
   document.querySelectorAll('.screen').forEach(function(s){s.style.display='none';s.classList.remove('active');});
   el.style.display='flex';el.classList.add('active');
   document.querySelectorAll('.nb').forEach(function(b,i){
-    var ids=['home','quiz','maas','palavras','chat'];
+    var ids=['home','quiz','maas','mavi','chat'];
     b.classList.toggle('active',ids[i]===id);
   });
   // Chamar init se necessário
@@ -344,6 +344,36 @@ body{font-family:'Nunito Sans',sans-serif;color:var(--text)}
 
 .version-badge{position:fixed;bottom:6px;right:8px;font-size:10px;color:var(--t3);z-index:1;pointer-events:none;background:var(--bg);padding:2px 6px;border-radius:99px;opacity:.6}
 
+
+.mavi-ciclo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.mavi-node{border-radius:var(--r);padding:13px;text-align:center;cursor:pointer;transition:all .2s;border:2px solid transparent}
+.mavi-node.ativo{transform:scale(1.04);box-shadow:0 4px 16px rgba(0,0,0,0.12)}
+.mavi-node .mn-ic{font-size:24px;margin-bottom:5px}
+.mavi-node .mn-title{font-size:13px;font-weight:700}
+.mavi-node .mn-desc{font-size:11px;opacity:.8;margin-top:2px;line-height:1.4}
+.mavi-seta{display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--t3)}
+.mavi-detalhe{border-radius:var(--r);padding:15px;margin-bottom:14px;display:none}
+.mavi-detalhe.show{display:block;animation:fadeIn .3s ease}
+.ressig-step{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:15px;margin-bottom:11px}
+.ressig-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;margin-bottom:10px}
+.ressig-q{font-size:14px;font-weight:500;color:var(--text);margin-bottom:8px;line-height:1.4}
+.ressig-ta{width:100%;min-height:70px;border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;font-size:13px;color:var(--text);background:var(--bg);resize:none;outline:none;line-height:1.6;font-family:'Nunito Sans',sans-serif}
+.ressig-ta:focus{border-color:var(--green)}
+.heroi-card{border-radius:var(--r);padding:15px;margin-bottom:11px;cursor:pointer;border:2px solid transparent;transition:all .2s}
+.heroi-card.sel{border-width:2px}
+.heroi-card .hc-title{font-size:15px;font-weight:700;margin-bottom:5px}
+.heroi-card .hc-desc{font-size:13px;line-height:1.5;opacity:.85}
+.deserto-step{border-radius:var(--r);padding:14px;margin-bottom:10px}
+.deserto-num{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+.deserto-title{font-size:15px;font-weight:700;margin-bottom:5px}
+.deserto-desc{font-size:13px;line-height:1.5}
+.mavi-tabs{display:flex;gap:5px;margin-bottom:16px;overflow-x:auto}
+.mavi-tabs::-webkit-scrollbar{display:none}
+.mavi-tab{padding:8px 14px;border-radius:var(--rs);border:1px solid var(--border);background:var(--card);font-size:12px;font-weight:600;color:var(--t2);cursor:pointer;white-space:nowrap;font-family:'Nunito Sans',sans-serif;flex-shrink:0}
+.mavi-tab.on{border-color:var(--purple);background:var(--pl);color:var(--pd)}
+.mavi-panel{display:none}
+.mavi-panel.on{display:block;animation:fadeIn .2s ease}
+
 </style>
 </head>
 <body>
@@ -402,6 +432,9 @@ body{font-family:'Nunito Sans',sans-serif;color:var(--text)}
     <div class="og" style="margin-bottom:0">
       <div class="oc" onclick="nav('profecia')" style="grid-column:span 2"><div class="oi">🔮</div><div class="ol">Profecia + Reprogramação</div><div class="od">Reescreva sua história</div></div>
     </div>
+    <div class="oc" onclick="nav('mavi')" style="grid-column:span 2"><div class="oi">🧠</div><div class="ol">MAVI — Matriz de Crenças</div><div class="od">Ciclo · ressignificação · herói aprendiz</div></div>
+    </div>
+    <div class="og" style="margin-bottom:0;margin-top:0">
     <div class="sl" style="margin-top:14px">Para responsáveis</div>
     <div class="card" style="display:flex;gap:11px;align-items:center;cursor:pointer" onclick="window.location.href='painel.html'">
       <div style="width:38px;height:38px;border-radius:11px;background:var(--pl);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">👨‍👩‍👧</div>
@@ -427,7 +460,7 @@ body{font-family:'Nunito Sans',sans-serif;color:var(--text)}
     <button class="nb active" onclick="nav('home')"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg><span>Início</span></button>
     <button class="nb" onclick="nav('quiz')"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg><span>CIS</span></button>
     <button class="nb" onclick="nav('maas')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>MAAS</span></button>
-    <button class="nb" onclick="nav('palavras')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><path d="M8 10h8M8 14h5"/></svg><span>Palavras</span></button>
+    <button class="nb" onclick="nav('mavi')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg><span>MAVI</span></button>
     <button class="nb" onclick="nav('chat')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span>Chat</span></button>
   </div>
 </div>
@@ -686,6 +719,144 @@ body{font-family:'Nunito Sans',sans-serif;color:var(--text)}
   </div>
 </div>
 
+<!-- MAVI -->
+<div id="s-mavi" class="screen" style="display:none">
+  <div class="topbar"><button class="btn-back" onclick="nav('home')"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Voltar</button><span class="topbar-title">MAVI — Matriz de Crenças</span></div>
+  <div class="scroll">
+    <div class="hero" style="background:linear-gradient(135deg,#534AB7,#3C3489)">
+      <div class="gr">🧠 Neurociência + Fé</div>
+      <div class="ti">Matriz Ativa de Geração de Crenças</div>
+      <div class="su">Entenda o ciclo que forma suas crenças e aprenda a reprogramá-lo.</div>
+    </div>
+
+    <div class="mavi-tabs" id="mavi-tabs">
+      <button class="mavi-tab on" onclick="setMaviTab(0)">O Ciclo</button>
+      <button class="mavi-tab" onclick="setMaviTab(1)">Ressignificação</button>
+      <button class="mavi-tab" onclick="setMaviTab(2)">Herói ou Vítima</button>
+      <button class="mavi-tab" onclick="setMaviTab(3)">Sair do Deserto</button>
+    </div>
+
+    <!-- CICLO MAVI -->
+    <div class="mavi-panel on" id="mp0">
+      <div class="sl">Como suas crenças se formam</div>
+      <div class="card" style="background:var(--pl);border-color:var(--purple);margin-bottom:14px">
+        <div style="font-size:13px;color:var(--pd);line-height:1.6">A Matriz Ativa de Geração de Crenças é o processo neurológico da mudança. Começa na <strong>comunicação</strong>, gera um <strong>pensamento</strong>, que gera um <strong>sentimento</strong>, que forma uma <strong>crença</strong>, que volta a influenciar sua comunicação.</div>
+      </div>
+      <div class="mavi-ciclo" id="mavi-ciclo-nodes"></div>
+      <div class="mavi-detalhe" id="mavi-detalhe"></div>
+      <div class="card" style="background:var(--gl);border-color:var(--green);margin-top:4px">
+        <div style="font-size:13px;font-weight:500;color:var(--gdp);margin-bottom:5px">💡 A chave da mudança</div>
+        <div style="font-size:13px;color:var(--gd);line-height:1.6">Mude sua <strong>comunicação</strong> — as palavras que você fala para si mesmo e para os outros — e você quebra o ciclo negativo. Por isso o Poder das Palavras é tão transformador!</div>
+      </div>
+    </div>
+
+    <!-- RESSIGNIFICAÇÃO -->
+    <div class="mavi-panel" id="mp1">
+      <div class="sl">Método Paulo Vieira de Ressignificação</div>
+      <div class="card" style="background:var(--pl);border-color:var(--purple);margin-bottom:14px">
+        <div style="font-size:13px;color:var(--pd);line-height:1.6">Toda experiência difícil pode ser ressignificada. Responda com honestidade as 4 perguntas abaixo sobre um desafio que você viveu.</div>
+      </div>
+
+      <div class="ressig-step">
+        <div class="ressig-num" style="background:var(--gl);color:var(--gdp)">1</div>
+        <div class="ressig-q">Escreva um problema ou experiência difícil que você teve:</div>
+        <textarea class="ressig-ta" id="ressig1" placeholder="Descreva a situação..."></textarea>
+      </div>
+      <div class="ressig-step">
+        <div class="ressig-num" style="background:var(--pl);color:var(--pd)">2</div>
+        <div class="ressig-q">Poderia ter sido pior? Como?</div>
+        <textarea class="ressig-ta" id="ressig2" placeholder="Sim, poderia ter sido pior porque..."></textarea>
+      </div>
+      <div class="ressig-step">
+        <div class="ressig-num" style="background:var(--al);color:#633806">3</div>
+        <div class="ressig-q">O que esse problema te ensinou ou fez mudar positivamente?</div>
+        <textarea class="ressig-ta" id="ressig3" placeholder="Aprendi que..."></textarea>
+      </div>
+      <div class="ressig-step">
+        <div class="ressig-num" style="background:var(--cl);color:var(--cd)">4</div>
+        <div class="ressig-q">Qual é a oportunidade escondida nisso?</div>
+        <textarea class="ressig-ta" id="ressig4" placeholder="A oportunidade escondida é..."></textarea>
+      </div>
+
+      <div style="background:var(--pl);border-radius:var(--rs);padding:11px 14px;font-size:13px;color:var(--pd);line-height:1.5;margin-bottom:14px;font-style:italic">
+        "...Neste mundo vocês terão aflições..." — João 16:33
+      </div>
+      <button class="btn-p" style="background:var(--purple)" onclick="salvarRessig()">✨ Salvar minha ressignificação</button>
+      <div id="ressig-ok" style="display:none;background:var(--gl);border-radius:var(--rs);padding:12px 14px;font-size:13px;color:var(--gdp);margin-top:10px;line-height:1.5">
+        🌱 Parabéns! Você acabou de praticar a ressignificação — a habilidade de dar um novo e melhor significado às suas experiências. Isso muda suas crenças!
+      </div>
+    </div>
+
+    <!-- HERÓI OU VÍTIMA -->
+    <div class="mavi-panel" id="mp2">
+      <div class="sl">Qual papel você está vivendo?</div>
+      <div class="card" style="background:var(--pl);border-color:var(--purple);margin-bottom:14px">
+        <div style="font-size:13px;color:var(--pd);line-height:1.6">Nos acontecimentos da vida, você sempre terá apenas dois papéis para viver. Escolha conscientemente.</div>
+      </div>
+
+      <div class="heroi-card" id="hc-vitima" style="background:var(--rl);border-color:var(--red)" onclick="selecionarPapel('vitima')">
+        <div class="hc-title" style="color:var(--rd)">😔 Vítima Sofredora</div>
+        <div class="hc-desc" style="color:var(--rd)">Deixa que os acontecimentos e circunstâncias externas ditem e controlem sua fala e sua vida. Resultado: fracasso.</div>
+        <div style="margin-top:10px;font-size:12px;color:var(--rd);font-style:italic">Se vitimizou... foi reprovado. Reclamou... foi reprovado. Criticou... foi reprovado.</div>
+      </div>
+
+      <div class="heroi-card" id="hc-heroi" style="background:var(--gl);border-color:var(--green)" onclick="selecionarPapel('heroi')">
+        <div class="hc-title" style="color:var(--gdp)">🦸 Herói Aprendiz</div>
+        <div class="hc-desc" style="color:var(--gd)">Decide pela melhor comunicação independente dos acontecimentos. Sabe dar o melhor significado a tudo. Resultado: vitória.</div>
+        <div style="margin-top:10px;font-size:12px;color:var(--gd);font-style:italic">"O herói aprendiz decide qual será a sua comunicação, independentemente dos acontecimentos."</div>
+      </div>
+
+      <div id="papel-result" style="display:none;border-radius:var(--r);padding:15px;margin-top:4px"></div>
+
+      <div class="sl" style="margin-top:14px">Meus últimos 3 desafios</div>
+      <div style="font-size:13px;color:var(--t2);margin-bottom:10px">Como você enfrentou cada um — como herói ou como vítima?</div>
+      <div id="desafios-list"></div>
+      <button class="btn-p" style="background:var(--green)" onclick="addDesafio()">+ Adicionar desafio</button>
+    </div>
+
+    <!-- SAIR DO DESERTO -->
+    <div class="mavi-panel" id="mp3">
+      <div class="sl">Como passar na prova e sair do deserto</div>
+      <div class="card" style="background:var(--pl);border-color:var(--purple);margin-bottom:14px">
+        <div style="font-size:13px;color:var(--pd);line-height:1.6">"Se passar na prova, passa de ano! Se atravessar o deserto, vai para a terra prometida! Se zerar o game, passa de fase!"</div>
+      </div>
+
+      <div class="deserto-step" style="background:var(--gl)">
+        <div class="deserto-num" style="color:var(--gd)">Passo 1</div>
+        <div class="deserto-title" style="color:var(--gdp)">🎯 Tenha uma visão positiva de futuro</div>
+        <div class="deserto-desc" style="color:var(--gd)">Mesmo no deserto, mantenha viva a imagem do destino. Quem você quer ser? Como vai ser sua vida na terra prometida?</div>
+        <textarea class="ressig-ta" id="visao-futuro" placeholder="Minha visão de futuro é..." style="margin-top:10px;background:rgba(255,255,255,0.6)"></textarea>
+      </div>
+
+      <div class="deserto-step" style="background:var(--pl)">
+        <div class="deserto-num" style="color:var(--pd)">Passo 2</div>
+        <div class="deserto-title" style="color:var(--pd)">🙏 Comunique gratidão e vitória</div>
+        <div class="deserto-desc" style="color:var(--purple)">"Deem graças em TODAS as circunstâncias, pois essa é a vontade de Deus para vocês em Cristo Jesus." — 1 Tessalonicenses 5:18</div>
+        <textarea class="ressig-ta" id="gratidao" placeholder="Hoje sou grato(a) por..." style="margin-top:10px;background:rgba(255,255,255,0.6)"></textarea>
+      </div>
+
+      <div class="deserto-step" style="background:var(--al)">
+        <div class="deserto-num" style="color:#633806">Passo 3</div>
+        <div class="deserto-title" style="color:#633806">💡 Dê um novo e melhor significado</div>
+        <div class="deserto-desc" style="color:#633806">Sua capacidade de dar o melhor significado possível a tudo que lhe acontece determinará seu destino.</div>
+        <textarea class="ressig-ta" id="novo-sig" placeholder="O novo significado que dou a esse momento difícil é..." style="margin-top:10px;background:rgba(255,255,255,0.6)"></textarea>
+      </div>
+
+      <div style="background:var(--gl);border-radius:var(--rs);padding:11px 14px;font-size:13px;color:var(--gdp);line-height:1.5;margin-bottom:14px">
+        🏆 "Não reclame se as provas vierem. Afinal, ninguém vai para o próximo nível sem prova. Quanto maior a prova, maior será a recompensa."
+      </div>
+      <button class="btn-p" style="background:var(--green)" onclick="salvarDeserto()">✅ Salvar minha jornada</button>
+      <div id="deserto-ok" style="display:none;background:var(--gl);border-radius:var(--rs);padding:12px 14px;font-size:13px;color:var(--gdp);margin-top:10px">
+        🌟 Incrível! Você praticou os 3 passos para sair do deserto. Continue nessa jornada — a terra prometida está à sua frente!
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:8px 0 4px;margin-top:8px">
+      <div style="font-size:11px;color:var(--t3)">Baseado no Método CIS® — Febracis | Paulo Vieira</div>
+    </div>
+  </div>
+</div>
+
 <!-- DIARY -->
 <div id="s-diary" class="screen" style="display:none">
   <div class="topbar"><button class="btn-back" onclick="nav('home')"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Voltar</button><span class="topbar-title">Diário livre</span></div>
@@ -722,7 +893,7 @@ window.nav = function(id) {
   document.querySelectorAll('.screen').forEach(s=>{s.style.display='none';s.classList.remove('active')});
   el.style.display='flex';el.classList.add('active');
   document.querySelectorAll('.nb').forEach((b,i)=>{
-    const ids=['home','quiz','maas','palavras','chat'];
+    const ids=['home','quiz','maas','mavi','chat'];
     b.classList.toggle('active',ids[i]===id);
   });
   if(id==='quiz'){typeof curQ!=='undefined'&&(curQ=0,respostas=[],renderQ());}
@@ -732,25 +903,11 @@ window.nav = function(id) {
   if(id==='caminhos'){typeof initCaminhos==='function'&&initCaminhos();}
   if(id==='profecia'){typeof initProfecia==='function'&&initProfecia();}
   if(id==='palavras'){typeof initPalavras==='function'&&initPalavras();}
+  if(id==='mavi'){typeof initMavi==='function'&&initMavi();}
 };
 
-// API key gerenciada pelo claude.ai
 
-async function _call(system, userMsg){
-  const r=await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      model:'claude-sonnet-4-20250514',
-      max_tokens:1000,
-      system:system,
-      messages:[{role:'user',content:userMsg}]
-    })
-  });
-  if(!r.ok){const t=await r.text();throw new Error('HTTP '+r.status+': '+t.slice(0,100));}
-  const d=await r.json();
-  return d.content?.[0]?.text||'';
-}
+
 async function fetchAI(elId,systemPrompt,userMsg){
   try{
     const text=await geminiCall(systemPrompt,userMsg);
@@ -837,7 +994,7 @@ function nav(id){
   document.querySelectorAll('.screen').forEach(s=>{s.style.display='none';s.classList.remove('active')});
   el.style.display='flex';el.classList.add('active');
   document.querySelectorAll('.nb').forEach((b,i)=>{
-    const ids=['home','quiz','maas','palavras','chat'];
+    const ids=['home','quiz','maas','mavi','chat'];
     b.classList.toggle('active',ids[i]===id);
   });
   if(id==='quiz'){curQ=0;respostas=[];renderQ();}
@@ -975,60 +1132,32 @@ async function sendChat(){
   if(!msg)return;
   input.value='';
   appendMsg(msg,'user');
-  chatHist.push({role:'user',content:msg});
   const typing=document.createElement('div');
-  typing.className='msg ai';
-  typing.id='typing';
+  typing.className='msg ai';typing.id='typing';
   typing.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
   document.getElementById('chat-msgs').appendChild(typing);
   scrollChat();
-  try{
-    const _msgs = chatHist.filter(m=>m.role==='user'||m.role==='assistant')
-      .reduce((acc,m)=>{
-        if(acc.length===0||acc[acc.length-1].role!==m.role)
-          acc.push({role:m.role,content:m.content});
-        return acc;
-      },[]);
-    if(_msgs.length===0||_msgs[0].role!=='user'){
-      document.getElementById('typing')?.remove();
-      appendMsg('Olá! Como posso te ajudar hoje?','ai');
-      return;
-    }
-    const _body={
-      model:'claude-sonnet-4-20250514',
-      max_tokens:500,
-      system:'Voce e a FlorescerIA, assistente empatica baseada no Metodo CIS. Ajuda criancas e adolescentes com inteligencia emocional e valores cristas. Responda em portugues brasileiro, tom gentil. Nunca diagnostique. Respostas curtas (2-3 frases).',
-      messages:_msgs
-    };
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(_body)
-    });
-    if(!res.ok){const t=await res.text();console.error('API error body:',t);throw new Error('HTTP '+res.status+': '+t.slice(0,200));}
-    const data=await res.json();
-    const reply=data.content?.[0]?.text||'Estou aqui com você 💚';
+  setTimeout(()=>{
     document.getElementById('typing')?.remove();
+    const respostas=[
+      'Obrigada por compartilhar isso comigo. Você está dando um passo muito importante ao falar sobre o que sente. 💚',
+      'Eu ouço você. Seus sentimentos são válidos e importantes. Continue me contando... 🌱',
+      'Que corajoso(a) você é ao expressar isso! Lembre-se: você tem valor, capacidade e merece o melhor. ✨',
+      'Estou aqui com você. Cada palavra que você escreve é um passo para florescer. 💚',
+      'Você não está sozinho(a). Deus te criou de forma única e especial. Você tem um propósito! 🌱',
+      'Isso que você sente é real e importante. Você é mais forte do que imagina. 💪',
+    ];
+    const reply=respostas[Math.floor(Math.random()*respostas.length)];
     appendMsg(reply,'ai');
-    chatHist.push({role:'assistant',content:reply});
-  }catch(err){
-    console.error('sendChat erro:',err);
-    document.getElementById('typing')?.remove();
-    appendMsg('Estou aqui com você 💚 Continue me contando...','ai');
-  }
+    chatHist.push({role:'user',content:msg});
+  },1000);
 }
 
 function appendMsg(t,w){const el=document.createElement('div');el.className='msg '+w;el.textContent=t;document.getElementById('chat-msgs').appendChild(el);scrollChat();}
 function scrollChat(){const s=document.getElementById('chat-scroll');setTimeout(()=>s.scrollTop=s.scrollHeight,50);}
 
 async function fetchAI(elId,prompt){
-  try{
-    const text=await _call('Você é assistente do FlorescerIA baseado no Método CIS® com valores evangélicos. Responda em português brasileiro, tom acolhedor.',prompt);
-    document.getElementById(elId).textContent=text||'Continue nessa jornada! 🌱';
-  }catch(err){
-    console.error('fetchAI:',err);
-    document.getElementById(elId).textContent='Continue nessa jornada de autoconhecimento! 🌱';
-  }
+  document.getElementById(elId).textContent='Continue nessa jornada de autoconhecimento! Você está no caminho certo. 🌱';
 }
 
 
@@ -1073,9 +1202,9 @@ async function profAiSuggest(i){
   sugg.style.display='block';
   sugg.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
   try{
-    const txt=await _call('Você é coach do FlorescerIA, baseado no Método CIS com base evangélica. Crie uma profecia pessoal poderosa no presente para a área solicitada. Use EU SOU, EU FAÇO, EU TENHO. Tom: poderoso, positivo, bíblico. Máximo 4 linhas. Sem introdução.', 'Crie uma profecia pessoal para a área: '+area);
-    sugg.textContent=txt||'Eu sou abençoado(a) nessa área. Eu faço o que é necessário com fé. Eu tenho tudo que preciso para prosperar.';
-    document.getElementById('pta'+i).value=txt||'Eu sou abençoado(a) nessa área.';
+    const txt='Eu sou abençoado(a) e próspero(a) nessa área de '+area+'. Eu faço o que é necessário com fé e determinação. Eu tenho tudo que preciso para prosperar e florescer.';
+    sugg.textContent=txt;
+    document.getElementById('pta'+i).value=txt;
     profData[i].text=txt;
   }catch{sugg.textContent='Eu sou abençoado(a) e próspero(a) nessa área. Eu faço o que é necessário. Eu tenho tudo para florescer.';}
 }
@@ -1239,8 +1368,7 @@ async function pdpAnalisar(){
   box.style.display='block';box.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
   const prompt='Área: '+a.n+'. O que a pessoa tem falado: "'+txt+'"';
   try{
-    const txt2=await _call('Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Analise palavras que a pessoa tem falado. Identifique se são de vida (bênção) ou morte (maldição) segundo Pv 18:21. Responda em português, tom acolhedor: 1 frase de validação + avalie se abençoam ou prejudicam + sugira uma palavra de vida. Máximo 4 linhas.', prompt);
-    box.textContent=txt2||'Suas palavras têm poder. Escolha palavras de vida!';
+    box.textContent='Suas palavras têm poder de criar sua realidade! Escolha conscientemente palavras de vida e bênção sobre cada área. Provérbios 18:21 diz: a língua tem poder para trazer vida ou morte.';
   }catch{box.textContent='Suas palavras têm poder criativo. Escolha conscientemente palavras de vida!';}
 }
 
@@ -1250,8 +1378,7 @@ async function pdpGerarDecretos(){
   box.style.display='block';box.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
   const prompt='Refine ou crie decretos para: '+decretos.map(d=>d.area+': "'+( d.texto||'(não preenchido)')+'"').join(', ');
   try{
-    const txt3=await _call('Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Crie decretos pessoais usando EU SOU, EU FAÇO, EU TENHO. Use linguagem bíblica. Escreva no presente, com poder. Para cada área, 2-3 linhas. Sem introdução.', prompt);
-    box.textContent=txt3||'Eu sou abençoado(a). Eu faço o que Deus preparou. Eu tenho tudo para prosperar.';
+    box.textContent='EU SOU criação de Deus, feito(a) de forma maravilhosa e única.\nEU FAÇO tudo o que é necessário com fé, coragem e determinação.\nEU TENHO tudo que preciso para viver uma vida extraordinária e abençoada.';
   }catch{box.textContent='Eu sou abençoado(a) e próspero(a). Eu faço tudo com excelência e fé. Eu tenho tudo que preciso para viver em abundância.';}
   document.getElementById('pdp-btn-prox3').style.display='block';
 }
@@ -1286,8 +1413,133 @@ window.compartilharLink = compartilharLink;
 window.installPWA = installPWA;
 window.toggleNotif = typeof toggleNotif !== 'undefined' ? toggleNotif : function(){};
 
+// ============ MAVI ============
+const MAVI_NODES = [
+  {id:'comunicacao',ic:'💬',title:'Comunicação',desc:'Verbal e não verbal',bg:'#E1F5EE',bc:'#1D9E75',tc:'#085041',
+   detalhe:'A comunicação é o ponto de partida. Tudo que você fala — para si e para os outros — gera imagens mentais instantâneas. Palavras de derrota criam imagens de fracasso. Palavras de vitória criam imagens de sucesso.',
+   verso:'"A língua tem poder para trazer vida ou para trazer morte." — Provérbios 18:21'},
+  {id:'pensamento',ic:'🧠',title:'Pensamento',desc:'Imagens fotográficas internas',bg:'#EEEDFE',bc:'#534AB7',tc:'#26215C',
+   detalhe:'Cada palavra gera imediatamente uma imagem fotográfica na sua mente. A mente não distingue o que é real do que é imaginação. Por isso visualizar o sucesso com emoção é tão poderoso.',
+   verso:'"Porque, como imagina em sua alma, assim ele é." — Provérbios 23:7'},
+  {id:'sentimento',ic:'❤️',title:'Sentimento',desc:'Emoções e sensações',bg:'#FAECE7',bc:'#D85A30',tc:'#4A1B0C',
+   detalhe:'Os pensamentos geram sentimentos. Sentimentos de medo, ansiedade e derrota reforçam crenças limitantes. Sentimentos de fé, gratidão e esperança constroem crenças poderosas.',
+   verso:'"Alegrai-vos sempre no Senhor; outra vez digo: Alegrai-vos." — Filipenses 4:4'},
+  {id:'crenca',ic:'⭐',title:'Crença',desc:'Padrões neurais formados',bg:'#FAEEDA',bc:'#BA7517',tc:'#633806',
+   detalhe:'Os sentimentos repetidos formam crenças — padrões neurais gravados no cérebro. Crenças positivas (EU SOU, EU FAÇO, EU TENHO) liberam seu potencial. Crenças negativas o aprisionam.',
+   verso:'"Tudo posso naquele que me fortalece." — Filipenses 4:13'},
+];
+let maviInited = false;
+
+function initMavi() {
+  if(maviInited) return;
+  maviInited = true;
+  const grid = document.getElementById('mavi-ciclo-nodes');
+  if(!grid) return;
+  MAVI_NODES.forEach((n,i) => {
+    const d = document.createElement('div');
+    d.className = 'mavi-node';
+    d.style.cssText = 'background:'+n.bg+';border-color:'+n.bc;
+    d.innerHTML = '<div class="mn-ic">'+n.ic+'</div><div class="mn-title" style="color:'+n.tc+'">'+n.title+'</div><div class="mn-desc" style="color:'+n.tc+'">'+n.desc+'</div>';
+    d.onclick = () => mostrarMaviNode(i, d);
+    grid.appendChild(d);
+  });
+  // Inicializar desafios
+  const dl = document.getElementById('desafios-list');
+  if(dl && dl.children.length === 0) {
+    for(let i=0;i<3;i++) {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;align-items:center';
+      row.innerHTML = '<input style="flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;background:var(--card);color:var(--text);outline:none" placeholder="Desafio '+(i+1)+'...">'
+        +'<select style="padding:9px 10px;border:1px solid var(--border);border-radius:var(--rs);font-size:12px;background:var(--card);color:var(--text);outline:none">'
+        +'<option value="">Como?</option><option value="heroi">🦸 Herói</option><option value="vitima">😔 Vítima</option></select>';
+      dl.appendChild(row);
+    }
+  }
+}
+
+function mostrarMaviNode(i, el) {
+  document.querySelectorAll('.mavi-node').forEach(n => n.classList.remove('ativo'));
+  el.classList.add('ativo');
+  const n = MAVI_NODES[i];
+  const det = document.getElementById('mavi-detalhe');
+  det.style.cssText = 'display:block;background:'+n.bg+';border:1.5px solid '+n.bc+';padding:15px;border-radius:var(--r)';
+  det.innerHTML = '<div style="font-size:14px;font-weight:700;color:'+n.tc+';margin-bottom:8px">'+n.ic+' '+n.title+'</div>'
+    +'<div style="font-size:13px;color:'+n.tc+';line-height:1.6;margin-bottom:10px">'+n.detalhe+'</div>'
+    +'<div style="font-size:12px;color:'+n.tc+';font-style:italic;opacity:.85">'+n.verso+'</div>';
+  det.classList.add('show');
+  det.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function setMaviTab(n) {
+  document.querySelectorAll('.mavi-tab').forEach((t,i) => t.classList.toggle('on',i===n));
+  document.querySelectorAll('.mavi-panel').forEach((p,i) => p.classList.toggle('on',i===n));
+  document.querySelectorAll('.mavi-panel').forEach((p,i) => { p.style.display = i===n?'block':'none'; });
+}
+
+function salvarRessig() {
+  const v1=document.getElementById('ressig1').value.trim();
+  const v2=document.getElementById('ressig2').value.trim();
+  const v3=document.getElementById('ressig3').value.trim();
+  const v4=document.getElementById('ressig4').value.trim();
+  if(!v1){alert('Escreva pelo menos o problema no passo 1.');return;}
+  const ok = document.getElementById('ressig-ok');
+  ok.style.display='block';
+  ok.scrollIntoView({behavior:'smooth',block:'nearest'});
+  try{localStorage.setItem('flo_ressig',JSON.stringify({v1,v2,v3,v4,data:new Date().toISOString()}));}catch{}
+}
+
+function selecionarPapel(papel) {
+  const res = document.getElementById('papel-result');
+  res.style.display = 'block';
+  if(papel==='heroi') {
+    document.getElementById('hc-heroi').style.borderWidth='3px';
+    document.getElementById('hc-vitima').style.opacity='.5';
+    res.style.cssText = 'display:block;background:var(--gl);border-radius:var(--r);padding:15px';
+    res.innerHTML = '<div style="font-size:15px;font-weight:700;color:var(--gdp);margin-bottom:6px">🦸 Você escolheu ser Herói Aprendiz!</div>'
+      +'<div style="font-size:13px;color:var(--gd);line-height:1.5">Excelente escolha! O herói aprendiz sabe que toda prova é uma oportunidade de crescer. Continue dando o melhor significado a cada situação!</div>';
+  } else {
+    document.getElementById('hc-vitima').style.borderWidth='3px';
+    document.getElementById('hc-heroi').style.opacity='.5';
+    res.style.cssText = 'display:block;background:var(--al);border-radius:var(--r);padding:15px';
+    res.innerHTML = '<div style="font-size:15px;font-weight:700;color:#633806;margin-bottom:6px">Atenção! Papel de Vítima Sofredora</div>'
+      +'<div style="font-size:13px;color:#633806;line-height:1.5">Não se preocupe — reconhecer é o primeiro passo! O herói aprendiz está em você. Decida agora mudar sua comunicação e dar um novo significado às suas circunstâncias. Você consegue!</div>';
+  }
+  res.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function addDesafio() {
+  const dl = document.getElementById('desafios-list');
+  const row = document.createElement('div');
+  row.style.cssText='display:flex;gap:8px;margin-bottom:8px;align-items:center';
+  const n = dl.children.length + 1;
+  row.innerHTML = '<input style="flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;background:var(--card);color:var(--text);outline:none" placeholder="Desafio '+n+'...">'
+    +'<select style="padding:9px 10px;border:1px solid var(--border);border-radius:var(--rs);font-size:12px;background:var(--card);color:var(--text);outline:none">'
+    +'<option value="">Como?</option><option value="heroi">🦸 Herói</option><option value="vitima">😔 Vítima</option></select>';
+  dl.appendChild(row);
+}
+
+function salvarDeserto() {
+  const vf=document.getElementById('visao-futuro').value.trim();
+  const gr=document.getElementById('gratidao').value.trim();
+  const ns=document.getElementById('novo-sig').value.trim();
+  if(!vf&&!gr&&!ns){alert('Preencha pelo menos um dos campos.');return;}
+  const ok=document.getElementById('deserto-ok');
+  ok.style.display='block';
+  ok.scrollIntoView({behavior:'smooth',block:'nearest'});
+  try{localStorage.setItem('flo_deserto',JSON.stringify({vf,gr,ns,data:new Date().toISOString()}));}catch{}
+}
+
+// Expor MAVI
+window.initMavi=initMavi;
+window.setMaviTab=setMaviTab;
+window.mostrarMaviNode=mostrarMaviNode;
+window.salvarRessig=salvarRessig;
+window.selecionarPapel=selecionarPapel;
+window.addDesafio=addDesafio;
+window.salvarDeserto=salvarDeserto;
+
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
 </script>
-<div style="position:fixed;bottom:5px;right:8px;font-size:10px;color:rgba(138,171,158,0.5);z-index:1;pointer-events:none">v9.9</div>
+<div style="position:fixed;bottom:5px;right:8px;font-size:10px;color:rgba(138,171,158,0.5);z-index:1;pointer-events:none">v1.0</div>
 </body>
 </html>
