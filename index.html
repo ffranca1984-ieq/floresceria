@@ -734,9 +734,10 @@ window.nav = function(id) {
   if(id==='palavras'){typeof initPalavras==='function'&&initPalavras();}
 };
 
-const GEMINI_URL='https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyAQ.Ab8RN6IibZwWWFz9LtBqKvAqhl-6Nm1hMUkVjGX0XoOQxeEFYA';
+const GEMINI_URL='https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+const GEMINI_KEY='AQ.Ab8RN6K6DatgCBNqHdfz47GwbOwgMtyJeowbnpJ2RrmEnnnAQA';
 async function geminiCall(systemPrompt,userMsg){
-  const r=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+  const r=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json','X-goog-api-key':GEMINI_KEY},
     body:JSON.stringify({
       system_instruction:{parts:[{text:systemPrompt}]},
       contents:[{role:'user',parts:[{text:userMsg}]}],
@@ -989,7 +990,7 @@ async function sendChat(){
     };
     const res=await fetch(GEMINI_URL,{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','X-goog-api-key':GEMINI_KEY},
       body:JSON.stringify(body)
     });
     if(!res.ok){const t=await res.text();throw new Error('HTTP '+res.status+': '+t.slice(0,100));}
@@ -1017,7 +1018,7 @@ async function fetchAI(elId,prompt){
     };
     const res=await fetch(GEMINI_URL,{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','X-goog-api-key':GEMINI_KEY},
       body:JSON.stringify(body)
     });
     if(!res.ok){const t=await res.text();throw new Error('HTTP '+res.status+': '+t.slice(0,100));}
@@ -1072,7 +1073,7 @@ async function profAiSuggest(i){
   sugg.style.display='block';
   sugg.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
   try{
-    const r=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:'Você é coach do FlorescerIA, baseado no Método CIS (Identidade/SOU, Capacidade/FAÇO, Merecimento/TENHO) com base evangélica. Crie uma profecia pessoal poderosa no presente para a área solicitada. Use as 3 crenças: EU SOU (identidade), EU FAÇO (capacidade), EU TENHO (merecimento). Tom: poderoso, positivo, bíblico quando pertinente. Máximo 4 linhas. Sem introdução.'}]},contents:[{role:'user',parts:[{text:'Crie uma profecia pessoal para a área: '+area}]}],generationConfig:{maxOutputTokens:1000}})});
+    const r=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json','X-goog-api-key':GEMINI_KEY},body:JSON.stringify({system_instruction:{parts:[{text:'Você é coach do FlorescerIA, baseado no Método CIS (Identidade/SOU, Capacidade/FAÇO, Merecimento/TENHO) com base evangélica. Crie uma profecia pessoal poderosa no presente para a área solicitada. Use as 3 crenças: EU SOU (identidade), EU FAÇO (capacidade), EU TENHO (merecimento). Tom: poderoso, positivo, bíblico quando pertinente. Máximo 4 linhas. Sem introdução.'}]},contents:[{role:'user',parts:[{text:'Crie uma profecia pessoal para a área: '+area}]}],generationConfig:{maxOutputTokens:1000}})});
     const d=await r.json();
     const txt=d.candidates?.[0]?.content?.parts?.[0]?.text||'Eu sou abençoado(a) nessa área. Eu faço o que é necessário com fé. Eu tenho tudo que preciso para prosperar.';
     sugg.textContent=txt;
@@ -1240,7 +1241,7 @@ async function pdpAnalisar(){
   box.style.display='block';box.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
   const prompt='Área: '+a.n+'. O que a pessoa tem falado: "'+txt+'"';
   try{
-    const r=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:'Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Analise palavras que a pessoa tem falado. Identifique se são de vida (bênção) ou morte (maldição) segundo Pv 18:21. Responda em português, tom acolhedor: 1 frase de validação + avalie se abençoam ou prejudicam + sugira uma palavra de vida. Máximo 4 linhas.'}]},contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:1000}})});
+    const r=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json','X-goog-api-key':GEMINI_KEY},body:JSON.stringify({system_instruction:{parts:[{text:'Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Analise palavras que a pessoa tem falado. Identifique se são de vida (bênção) ou morte (maldição) segundo Pv 18:21. Responda em português, tom acolhedor: 1 frase de validação + avalie se abençoam ou prejudicam + sugira uma palavra de vida. Máximo 4 linhas.'}]},contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:1000}})});
     const d=await r.json();box.textContent=d.candidates?.[0]?.content?.parts?.[0]?.text||'Suas palavras têm poder. Escolha palavras de vida!';
   }catch{box.textContent='Suas palavras têm poder criativo. Escolha conscientemente palavras de vida!';}
 }
@@ -1251,7 +1252,7 @@ async function pdpGerarDecretos(){
   box.style.display='block';box.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
   const prompt='Refine ou crie decretos para: '+decretos.map(d=>d.area+': "'+( d.texto||'(não preenchido)')+'"').join(', ');
   try{
-    const r=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:'Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Crie decretos pessoais usando EU SOU, EU FAÇO, EU TENHO. Use linguagem bíblica. Escreva no presente, com poder. Para cada área, 2-3 linhas. Sem introdução.'}]},contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:1000}})});
+    const r=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json','X-goog-api-key':GEMINI_KEY},body:JSON.stringify({system_instruction:{parts:[{text:'Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Crie decretos pessoais usando EU SOU, EU FAÇO, EU TENHO. Use linguagem bíblica. Escreva no presente, com poder. Para cada área, 2-3 linhas. Sem introdução.'}]},contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:1000}})});
     const d=await r.json();
     box.textContent=d.candidates?.[0]?.content?.parts?.[0]?.text||'Eu sou abençoado(a). Eu faço o que Deus preparou. Eu tenho tudo para prosperar.';
   }catch{box.textContent='Eu sou abençoado(a) e próspero(a). Eu faço tudo com excelência e fé. Eu tenho tudo que preciso para viver em abundância.';}
