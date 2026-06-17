@@ -741,7 +741,7 @@ async function _call(system,userMsg){
     method:'POST',
     headers:{
       'Content-Type':'application/json',
-      'x-api-key':_AK(),
+      'x-api-key':_AK,
       'anthropic-version':'2023-06-01',
       'anthropic-dangerous-direct-browser-access':'true'
     },
@@ -992,7 +992,7 @@ async function sendChat(){
       method:'POST',
       headers:{
         'Content-Type':'application/json',
-        'x-api-key':_AK(),
+        'x-api-key':_AK,
         'anthropic-version':'2023-06-01',
         'anthropic-dangerous-direct-browser-access':'true'
       },
@@ -1286,6 +1286,6 @@ window.toggleNotif = typeof toggleNotif !== 'undefined' ? toggleNotif : function
 
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
 </script>
-<div style="position:fixed;bottom:5px;right:8px;font-size:10px;color:rgba(138,171,158,0.5);z-index:1;pointer-events:none">v9.5</div>
+<div style="position:fixed;bottom:5px;right:8px;font-size:10px;color:rgba(138,171,158,0.5);z-index:1;pointer-events:none">v9.6</div>
 </body>
 </html>
