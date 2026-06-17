@@ -734,17 +734,12 @@ window.nav = function(id) {
   if(id==='palavras'){typeof initPalavras==='function'&&initPalavras();}
 };
 
-const _AK=(()=>{const p=['sk-ant-api03-wDvUAhZ-XC7OSg','M1A1SMJZoS4FfDsyzA6FXcM3gln','Ezht4JBk2e5Zuy3TmyGBtvpMRcr','HAM4QRN7MY_oOpVmZw-BYTvTQAA'];return p.join('');})();
+// API key gerenciada pelo claude.ai
 
-async function _call(system,userMsg){
+async function _call(system, userMsg){
   const r=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'x-api-key':_AK,
-      'anthropic-version':'2023-06-01',
-      'anthropic-dangerous-direct-browser-access':'true'
-    },
+    headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
       model:'claude-sonnet-4-20250514',
       max_tokens:1000,
@@ -1005,15 +1000,9 @@ async function sendChat(){
       system:'Voce e a FlorescerIA, assistente empatica baseada no Metodo CIS. Ajuda criancas e adolescentes com inteligencia emocional e valores cristas. Responda em portugues brasileiro, tom gentil. Nunca diagnostique. Respostas curtas (2-3 frases).',
       messages:_msgs
     };
-    console.log('Sending to Anthropic:', JSON.stringify(_body).slice(0,200));
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key':_AK,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify(_body)
     });
     if(!res.ok){const t=await res.text();console.error('API error body:',t);throw new Error('HTTP '+res.status+': '+t.slice(0,200));}
@@ -1299,6 +1288,6 @@ window.toggleNotif = typeof toggleNotif !== 'undefined' ? toggleNotif : function
 
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
 </script>
-<div style="position:fixed;bottom:5px;right:8px;font-size:10px;color:rgba(138,171,158,0.5);z-index:1;pointer-events:none">v9.8</div>
+<div style="position:fixed;bottom:5px;right:8px;font-size:10px;color:rgba(138,171,158,0.5);z-index:1;pointer-events:none">v9.9</div>
 </body>
 </html>
