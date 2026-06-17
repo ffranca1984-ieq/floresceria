@@ -734,18 +734,27 @@ window.nav = function(id) {
   if(id==='palavras'){typeof initPalavras==='function'&&initPalavras();}
 };
 
-const GEMINI_URL='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
-const GEMINI_KEY=(()=>{const p=['AQ.Ab8RN6Lhrj1bnY','gnDSBf0f-0HNcL33k','lElH1y9DnaBiP-Q22oA'];return p.join('');})();
-async function geminiCall(systemPrompt,userMsg){
-  const r=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json','X-goog-api-key':GEMINI_KEY},
+const _AK=(()=>{const p=['sk-ant-api03-wDvUAhZ-XC7OSg','M1A1SMJZoS4FfDsyzA6FXcM3gln','Ezht4JBk2e5Zuy3TmyGBtvpMRcr','HAM4QRN7MY_oOpVmZw-BYTvTQAA'];return p.join('');})();
+
+async function _call(system,userMsg){
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key':_AK(),
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
     body:JSON.stringify({
-      system_instruction:{parts:[{text:systemPrompt}]},
-      contents:[{role:'user',parts:[{text:userMsg}]}],
-      generationConfig:{maxOutputTokens:1000}
-    })});
+      model:'claude-sonnet-4-20250514',
+      max_tokens:1000,
+      system:system,
+      messages:[{role:'user',content:userMsg}]
+    })
+  });
   if(!r.ok){const t=await r.text();throw new Error('HTTP '+r.status+': '+t.slice(0,100));}
   const d=await r.json();
-  return d.candidates?.[0]?.content?.parts?.[0]?.text||'';
+  return d.content?.[0]?.text||'';
 }
 async function fetchAI(elId,systemPrompt,userMsg){
   try{
@@ -979,23 +988,24 @@ async function sendChat(){
   document.getElementById('chat-msgs').appendChild(typing);
   scrollChat();
   try{
-    const contents=chatHist.map(m=>({
-      role:m.role==='assistant'?'model':'user',
-      parts:[{text:m.content}]
-    }));
-    const body={
-      system_instruction:{parts:[{text:'Você é a FlorescerIA, uma assistente virtual empática, acolhedora e baseada nos pilares do Método CIS®. Seu objetivo é ajudar crianças e adolescentes a desenvolverem suas inteligências emocionais. Guie o usuário com dinâmicas práticas, reprogramação de crenças (Identidade, Capacidade e Merecimento), decretos e o Poder das Palavras.'}]},
-      contents:contents,
-      generationConfig:{maxOutputTokens:500,temperature:0.8}
-    };
-    const res=await fetch(GEMINI_URL,{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json','X-goog-api-key':GEMINI_KEY},
-      body:JSON.stringify(body)
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':_AK(),
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:500,
+        system:'Você é a FlorescerIA, assistente empática baseada no Método CIS® (Identidade/SOU, Capacidade/FAÇO, Merecimento/TENHO). Ajuda crianças e adolescentes a desenvolverem inteligência emocional com base evangélica. Responda em português brasileiro, tom gentil, acolhedor e cristão. Nunca diagnostique. Respostas curtas (2-3 frases).',
+        messages:chatHist.map(m=>({role:m.role,content:m.content}))
+      })
     });
-    if(!res.ok){const t=await res.text();throw new Error('HTTP '+res.status+': '+t.slice(0,100));}
+    if(!res.ok){const t=await res.text();throw new Error('HTTP '+res.status);}
     const data=await res.json();
-    const reply=data.candidates?.[0]?.content?.parts?.[0]?.text||'Estou aqui com você 💚';
+    const reply=data.content?.[0]?.text||'Estou aqui com você 💚';
     document.getElementById('typing')?.remove();
     appendMsg(reply,'ai');
     chatHist.push({role:'assistant',content:reply});
@@ -1011,22 +1021,10 @@ function scrollChat(){const s=document.getElementById('chat-scroll');setTimeout(
 
 async function fetchAI(elId,prompt){
   try{
-    const body={
-      system_instruction:{parts:[{text:'Você é assistente do FlorescerIA baseado no Método CIS® (Identidade/SOU, Capacidade/FAÇO, Merecimento/TENHO) com valores evangélicos. Responda em português brasileiro, tom acolhedor e gentil.'}]},
-      contents:[{role:'user',parts:[{text:prompt}]}],
-      generationConfig:{maxOutputTokens:1000,temperature:0.7}
-    };
-    const res=await fetch(GEMINI_URL,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','X-goog-api-key':GEMINI_KEY},
-      body:JSON.stringify(body)
-    });
-    if(!res.ok){const t=await res.text();throw new Error('HTTP '+res.status+': '+t.slice(0,100));}
-    const data=await res.json();
-    const text=data.candidates?.[0]?.content?.parts?.[0]?.text||'Continue nessa jornada! 🌱';
-    document.getElementById(elId).textContent=text;
+    const text=await _call('Você é assistente do FlorescerIA baseado no Método CIS® com valores evangélicos. Responda em português brasileiro, tom acolhedor.',prompt);
+    document.getElementById(elId).textContent=text||'Continue nessa jornada! 🌱';
   }catch(err){
-    console.error('fetchAI erro:',err);
+    console.error('fetchAI:',err);
     document.getElementById(elId).textContent='Continue nessa jornada de autoconhecimento! 🌱';
   }
 }
@@ -1073,11 +1071,9 @@ async function profAiSuggest(i){
   sugg.style.display='block';
   sugg.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
   try{
-    const r=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json','X-goog-api-key':GEMINI_KEY},body:JSON.stringify({system_instruction:{parts:[{text:'Você é coach do FlorescerIA, baseado no Método CIS (Identidade/SOU, Capacidade/FAÇO, Merecimento/TENHO) com base evangélica. Crie uma profecia pessoal poderosa no presente para a área solicitada. Use as 3 crenças: EU SOU (identidade), EU FAÇO (capacidade), EU TENHO (merecimento). Tom: poderoso, positivo, bíblico quando pertinente. Máximo 4 linhas. Sem introdução.'}]},contents:[{role:'user',parts:[{text:'Crie uma profecia pessoal para a área: '+area}]}],generationConfig:{maxOutputTokens:1000}})});
-    const d=await r.json();
-    const txt=d.candidates?.[0]?.content?.parts?.[0]?.text||'Eu sou abençoado(a) nessa área. Eu faço o que é necessário com fé. Eu tenho tudo que preciso para prosperar.';
-    sugg.textContent=txt;
-    document.getElementById('pta'+i).value=txt;
+    const txt=await _call('Você é coach do FlorescerIA, baseado no Método CIS com base evangélica. Crie uma profecia pessoal poderosa no presente para a área solicitada. Use EU SOU, EU FAÇO, EU TENHO. Tom: poderoso, positivo, bíblico. Máximo 4 linhas. Sem introdução.', 'Crie uma profecia pessoal para a área: '+area);
+    sugg.textContent=txt||'Eu sou abençoado(a) nessa área. Eu faço o que é necessário com fé. Eu tenho tudo que preciso para prosperar.';
+    document.getElementById('pta'+i).value=txt||'Eu sou abençoado(a) nessa área.';
     profData[i].text=txt;
   }catch{sugg.textContent='Eu sou abençoado(a) e próspero(a) nessa área. Eu faço o que é necessário. Eu tenho tudo para florescer.';}
 }
@@ -1241,8 +1237,8 @@ async function pdpAnalisar(){
   box.style.display='block';box.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
   const prompt='Área: '+a.n+'. O que a pessoa tem falado: "'+txt+'"';
   try{
-    const r=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json','X-goog-api-key':GEMINI_KEY},body:JSON.stringify({system_instruction:{parts:[{text:'Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Analise palavras que a pessoa tem falado. Identifique se são de vida (bênção) ou morte (maldição) segundo Pv 18:21. Responda em português, tom acolhedor: 1 frase de validação + avalie se abençoam ou prejudicam + sugira uma palavra de vida. Máximo 4 linhas.'}]},contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:1000}})});
-    const d=await r.json();box.textContent=d.candidates?.[0]?.content?.parts?.[0]?.text||'Suas palavras têm poder. Escolha palavras de vida!';
+    const txt2=await _call('Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Analise palavras que a pessoa tem falado. Identifique se são de vida (bênção) ou morte (maldição) segundo Pv 18:21. Responda em português, tom acolhedor: 1 frase de validação + avalie se abençoam ou prejudicam + sugira uma palavra de vida. Máximo 4 linhas.', prompt);
+    box.textContent=txt2||'Suas palavras têm poder. Escolha palavras de vida!';
   }catch{box.textContent='Suas palavras têm poder criativo. Escolha conscientemente palavras de vida!';}
 }
 
@@ -1252,9 +1248,8 @@ async function pdpGerarDecretos(){
   box.style.display='block';box.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
   const prompt='Refine ou crie decretos para: '+decretos.map(d=>d.area+': "'+( d.texto||'(não preenchido)')+'"').join(', ');
   try{
-    const r=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json','X-goog-api-key':GEMINI_KEY},body:JSON.stringify({system_instruction:{parts:[{text:'Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Crie decretos pessoais usando EU SOU, EU FAÇO, EU TENHO. Use linguagem bíblica. Escreva no presente, com poder. Para cada área, 2-3 linhas. Sem introdução.'}]},contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:1000}})});
-    const d=await r.json();
-    box.textContent=d.candidates?.[0]?.content?.parts?.[0]?.text||'Eu sou abençoado(a). Eu faço o que Deus preparou. Eu tenho tudo para prosperar.';
+    const txt3=await _call('Você é coach do FlorescerIA com base no Método CIS e valores evangélicos. Crie decretos pessoais usando EU SOU, EU FAÇO, EU TENHO. Use linguagem bíblica. Escreva no presente, com poder. Para cada área, 2-3 linhas. Sem introdução.', prompt);
+    box.textContent=txt3||'Eu sou abençoado(a). Eu faço o que Deus preparou. Eu tenho tudo para prosperar.';
   }catch{box.textContent='Eu sou abençoado(a) e próspero(a). Eu faço tudo com excelência e fé. Eu tenho tudo que preciso para viver em abundância.';}
   document.getElementById('pdp-btn-prox3').style.display='block';
 }
@@ -1291,6 +1286,6 @@ window.toggleNotif = typeof toggleNotif !== 'undefined' ? toggleNotif : function
 
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
 </script>
-<div style="position:fixed;bottom:5px;right:8px;font-size:10px;color:rgba(138,171,158,0.5);z-index:1;pointer-events:none">v9.4</div>
+<div style="position:fixed;bottom:5px;right:8px;font-size:10px;color:rgba(138,171,158,0.5);z-index:1;pointer-events:none">v9.5</div>
 </body>
 </html>
