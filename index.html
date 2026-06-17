@@ -1000,7 +1000,16 @@ async function sendChat(){
         model:'claude-sonnet-4-20250514',
         max_tokens:500,
         system:'Você é a FlorescerIA, assistente empática baseada no Método CIS® (Identidade/SOU, Capacidade/FAÇO, Merecimento/TENHO). Ajuda crianças e adolescentes a desenvolverem inteligência emocional com base evangélica. Responda em português brasileiro, tom gentil, acolhedor e cristão. Nunca diagnostique. Respostas curtas (2-3 frases).',
-        messages:chatHist.map(m=>({role:m.role,content:m.content}))
+        messages:(()=>{
+          const hist=chatHist.filter(m=>m.role==='user'||m.role==='assistant');
+          // Garantir que começa com user e alterna corretamente
+          const valid=[];
+          let lastRole='';
+          for(const m of hist){
+            if(m.role!==lastRole){valid.push(m);lastRole=m.role;}
+          }
+          return valid.map(m=>({role:m.role,content:m.content}));
+        })()
       })
     });
     if(!res.ok){const t=await res.text();throw new Error('HTTP '+res.status);}
@@ -1286,6 +1295,6 @@ window.toggleNotif = typeof toggleNotif !== 'undefined' ? toggleNotif : function
 
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
 </script>
-<div style="position:fixed;bottom:5px;right:8px;font-size:10px;color:rgba(138,171,158,0.5);z-index:1;pointer-events:none">v9.6</div>
+<div style="position:fixed;bottom:5px;right:8px;font-size:10px;color:rgba(138,171,158,0.5);z-index:1;pointer-events:none">v9.7</div>
 </body>
 </html>
